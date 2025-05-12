@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { storeRosterData, getRosterData, RosterData } from "../lib/db";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
@@ -48,8 +49,6 @@ function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   return calendar;
 }
 
-const LOCAL_STORAGE_KEY = "may2025DutyRosterData";
-
 export default function AdminUpload() {
   const [data, setData] = useState<string[][]>([]);
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -61,32 +60,42 @@ export default function AdminUpload() {
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from database on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
+    const loadData = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        setData(parsed.data || []);
-        setCalendar(parsed.calendar || {});
-      } catch {}
-    }
+        const rosterData = await getRosterData();
+        if (rosterData.length > 0) {
+          // Convert roster data back to matrix format
+          const matrix: string[][] = [];
+          const calendarData: CalendarMap = {};
+          
+          rosterData.forEach(entry => {
+            const date = new Date(entry.date);
+            const day = date.getDate();
+            calendarData[day] = {
+              AM: entry.personnel,
+              PM: entry.personnel,
+              ReserveAM: entry.scoreboard,
+              ReservePM: entry.scoreboard
+            };
+          });
+          
+          setCalendar(calendarData);
+        }
+      } catch (err) {
+        console.error('Error loading data:', err);
+      }
+    };
+    
+    loadData();
+    
     // Check lock state
     const lockState = localStorage.getItem(PIN_LOCK_KEY);
     if (lockState === "locked") {
       setLocked(true);
     }
   }, []);
-
-  // Save to localStorage whenever data/calendar changes
-  useEffect(() => {
-    if (Object.keys(calendar).length > 0) {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({ data, calendar })
-      );
-    }
-  }, [data, calendar]);
 
   // Lock if attempts exceeded
   useEffect(() => {
@@ -124,7 +133,17 @@ export default function AdminUpload() {
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
       setData(result.data);
-      setCalendar(getMay2025CalendarData(result.data));
+      const newCalendar = getMay2025CalendarData(result.data);
+      setCalendar(newCalendar);
+      
+      // Convert calendar data to roster data format and store in database
+      const rosterData: RosterData[] = Object.entries(newCalendar).map(([day, entry]) => ({
+        date: `2025-05-${day.padStart(2, '0')}`,
+        personnel: entry.AM,
+        scoreboard: entry.ReserveAM
+      }));
+      
+      await storeRosterData(rosterData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
