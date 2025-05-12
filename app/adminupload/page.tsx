@@ -1,19 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap } from "../lib/edge-config";
+import { storeRosterData, getRosterData, CalendarMap, CalendarEntry } from "../lib/edge-config";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
-
-type CalendarEntry = {
-  AM: string;
-  PM: string;
-  ReserveAM: string;
-  ReservePM: string;
-};
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
