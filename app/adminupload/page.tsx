@@ -18,6 +18,7 @@ export default function AdminUpload() {
     const loadData = async () => {
       try {
         const data = await getRosterData();
+        console.log('Loaded existing data:', data);
         setCalendar(data);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -67,6 +68,8 @@ export default function AdminUpload() {
 
         // Format date as YYYY-MM-DD
         const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        console.log('Processing date:', dateKey);
+        
         newCalendar[dateKey] = {
           AM: worksheet[`B${rowIndex + 1}`]?.v?.toString() || "",
           PM: worksheet[`C${rowIndex + 1}`]?.v?.toString() || "",
@@ -75,6 +78,7 @@ export default function AdminUpload() {
         };
       });
 
+      console.log('New calendar data to be stored:', newCalendar);
       await storeRosterData(newCalendar);
       setCalendar(newCalendar);
       setSuccess(true);
