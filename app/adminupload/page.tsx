@@ -2,196 +2,106 @@
 
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, CalendarMap } from "../lib/supabase";
+import * as XLSX from 'xlsx';
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
-const ADMIN_PIN = "7954";
-const MAX_ATTEMPTS = 5;
-const PIN_LOCK_KEY = "adminUploadPinLock";
-
-function getMay2025CalendarData(matrix: string[][]): CalendarMap {
-  const calendar: CalendarMap = {};
-  for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
-    const weekStart = DATE_ROW_INDEXES[w];
-    const dateRow = matrix[weekStart];
-    const amRow = matrix[weekStart + 1];
-    const pmRow = matrix[weekStart + 2];
-    const reserveAmRow = matrix[weekStart + 3];
-    const reservePmRow = matrix[weekStart + 4];
-
-    // For the first week, use columns 3-8 (D-I); for others, use 1-8 (B-I)
-    const colStart = w === 0 ? 3 : 1;
-    const colEnd = 8; // inclusive, column I
-
-    for (let col = colStart; col <= colEnd; col++) {
-      const dateCell = dateRow[col];
-      if (!dateCell) continue;
-      const match = String(dateCell).match(/\d+/);
-      if (!match) continue;
-      const dateNum = parseInt(match[0], 10);
-      if (isNaN(dateNum)) continue;
-      calendar[dateNum] = {
-        AM: amRow[col] || '',
-        PM: pmRow[col] || '',
-        ReserveAM: reserveAmRow[col] || '',
-        ReservePM: reservePmRow[col] || '',
-      };
-    }
-  }
-  return calendar;
-}
+const AM_COLUMN_INDEX = 1; // 0-based: column B
+const PM_COLUMN_INDEX = 2; // 0-based: column C
+const RESERVE_AM_COLUMN_INDEX = 3; // 0-based: column D
+const RESERVE_PM_COLUMN_INDEX = 4; // 0-based: column E
 
 export default function AdminUpload() {
+  const [file, setFile] = useState<File | null>(null);
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState<string | null>(null);
-  const [pinAttempts, setPinAttempts] = useState(0);
-  const [locked, setLocked] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // Load from Edge Config on mount
+  // Load existing data
   useEffect(() => {
     const loadData = async () => {
       try {
-        const calendarData = await getRosterData();
-        if (Object.keys(calendarData).length > 0) {
-          setCalendar(calendarData);
-        }
+        const data = await getRosterData();
+        setCalendar(data);
       } catch (err) {
         console.error('Error loading data:', err);
+        setError('Failed to load existing data');
       }
     };
-    
     loadData();
-    
-    // Check lock state
-    const lockState = localStorage.getItem(PIN_LOCK_KEY);
-    if (lockState === "locked") {
-      setLocked(true);
-    }
   }, []);
 
-  // Lock if attempts exceeded
-  useEffect(() => {
-    if (pinAttempts >= MAX_ATTEMPTS) {
-      setLocked(true);
-      localStorage.setItem(PIN_LOCK_KEY, "locked");
-    }
-  }, [pinAttempts]);
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (locked) return;
-    if (pin === ADMIN_PIN) {
-      setAuthenticated(true);
-      setPinError(null);
-    } else {
-      setPinError("Incorrect PIN");
-      setPinAttempts((a) => a + 1);
-      setPin("");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setError(null);
+      setSuccess(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleUpload = async () => {
+    if (!file) {
+      setError('Please select a file first');
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    const formData = new FormData();
-    formData.append("file", file);
+    setSuccess(false);
+
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      if (!worksheet) {
+        throw new Error('No worksheet found in the Excel file');
+      }
+
+      const newCalendar: CalendarMap = { ...calendar };
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1; // 1-12
+
+      DATE_ROW_INDEXES.forEach((rowIndex) => {
+        const dateCell = worksheet[`A${rowIndex + 1}`];
+        if (!dateCell || !dateCell.v) return;
+
+        const date = parseInt(dateCell.v.toString());
+        if (isNaN(date)) return;
+
+        const dateKey = `${currentYear}-${currentMonth}-${date}`;
+        newCalendar[dateKey] = {
+          AM: worksheet[`B${rowIndex + 1}`]?.v?.toString() || "",
+          PM: worksheet[`C${rowIndex + 1}`]?.v?.toString() || "",
+          ReserveAM: worksheet[`D${rowIndex + 1}`]?.v?.toString() || "",
+          ReservePM: worksheet[`E${rowIndex + 1}`]?.v?.toString() || "",
+        };
       });
-      if (!response.ok) throw new Error("Failed to upload file");
-      const result = await response.json();
-      const newCalendar = getMay2025CalendarData(result.data);
-      setCalendar(newCalendar);
-      
-      // Store the calendar data in Edge Config
+
       await storeRosterData(newCalendar);
+      setCalendar(newCalendar);
+      setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error('Error processing file:', err);
+      setError('Failed to process the file. Please make sure it\'s a valid Excel file with the correct format.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Build May 2025 calendar grid
-  const daysInMonth = 31;
-  const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
-  const weeks: number[][] = [];
-  let week: number[] = Array(firstDayOfWeek).fill(0);
-  for (let d = 1; d <= daysInMonth; d++) {
-    week.push(d);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
-    }
-  }
-  if (week.length) {
-    while (week.length < 7) week.push(0);
-    weeks.push(week);
-  }
-
-  if (locked) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-green-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600">Too many incorrect attempts. Please contact the administrator.</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!authenticated) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-green-50">
-        <form onSubmit={handlePinSubmit} className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-          <h2 className="text-2xl font-bold text-green-800 mb-6 text-center">Admin PIN Required</h2>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]{4}"
-            maxLength={4}
-            value={pin}
-            onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ""))}
-            className="w-full mb-4 px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
-            placeholder="Enter 4-digit PIN"
-            disabled={locked}
-            autoFocus
-          />
-          {pinError && <div className="text-red-600 mb-2 text-center">{pinError}</div>}
-          <button
-            type="submit"
-            className="w-full bg-green-700 text-white py-2 rounded font-semibold hover:bg-green-800 transition"
-            disabled={locked || pin.length !== 4}
-          >
-            Unlock
-          </button>
-          <div className="mt-4 text-sm text-green-700 text-center">
-            Attempts left: {MAX_ATTEMPTS - pinAttempts}
-          </div>
-        </form>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <h1 className="text-3xl font-bold mb-6 text-green-800">Admin Upload</h1>
+        
+        <div className="mb-6">
           <label className="block text-sm font-medium text-green-700 mb-2">
-            Upload Duty Roster File
+            Upload Excel File
           </label>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileUpload}
+            accept=".xlsx"
+            onChange={handleFileChange}
             className="block w-full text-sm text-green-700
               file:mr-4 file:py-2 file:px-4
               file:rounded-full file:border-0
@@ -200,56 +110,58 @@ export default function AdminUpload() {
               hover:file:bg-green-100"
           />
         </div>
-        {loading && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
-          </div>
-        )}
+
+        <button
+          onClick={handleUpload}
+          disabled={!file || loading}
+          className={`w-full py-2 px-4 rounded-md text-white font-medium
+            ${!file || loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700'
+            }`}
+        >
+          {loading ? 'Uploading...' : 'Upload'}
+        </button>
+
         {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-8">
+          <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
             {error}
           </div>
         )}
-        {Object.keys(calendar).length > 0 && (
+
+        {success && (
+          <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
+            File uploaded successfully!
+          </div>
+        )}
+
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-green-800 mb-4">Current Roster Data</h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-green-300">
-              <thead>
+            <table className="min-w-full divide-y divide-green-200">
+              <thead className="bg-green-50">
                 <tr>
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                    <th key={idx} className="px-2 py-2 border bg-green-100 text-xs font-semibold text-green-700">
-                      {day}
-                    </th>
-                  ))}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">AM</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">PM</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">Reserve AM</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">Reserve PM</th>
                 </tr>
               </thead>
-              <tbody>
-                {weeks.map((week, wIdx) => (
-                  <tr key={wIdx}>
-                    {week.map((date, dIdx) => (
-                      <td key={dIdx} className="align-top px-2 py-2 border min-w-[120px]">
-                        {date > 0 ? (
-                          <div>
-                            <div className="font-bold text-green-700 mb-1">{date}</div>
-                            {calendar[date] && (
-                              <div>
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-green-200 text-center">—</div>
-                        )}
-                      </td>
-                    ))}
+              <tbody className="bg-white divide-y divide-green-200">
+                {Object.entries(calendar).map(([date, entry]) => (
+                  <tr key={date}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-900">{date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-900">{entry.AM}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-900">{entry.PM}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{entry.ReserveAM}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{entry.ReservePM}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     </main>
   );

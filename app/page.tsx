@@ -26,7 +26,7 @@ function getShiftInfo(now: Date) {
   } else {
     // PM shift
     // If after 7:30pm, use today; if before 7:30am, use previous day
-    let pmDate = new Date(now);
+    const pmDate = new Date(now);
     if (now < amStart) {
       // Before 7:30am, PM shift is for previous day
       pmDate.setDate(now.getDate() - 1);
