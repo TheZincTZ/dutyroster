@@ -51,10 +51,11 @@ export default function Home() {
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
-  // Load data from Edge Config
+  // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log('Loading data...');
         const calendarData = await getRosterData();
         console.log('Loaded calendar data:', calendarData);
         setCalendar(calendarData);
@@ -81,6 +82,7 @@ export default function Home() {
   // Create a unique key for the current date that includes month and year
   const currentDateKey = `${shiftInfo.year}-${String(shiftInfo.month + 1).padStart(2, '0')}-${String(shiftInfo.date).padStart(2, '0')}`;
   console.log('Current date key:', currentDateKey);
+  console.log('All calendar keys:', Object.keys(calendar));
   console.log('Calendar data for current date:', calendar[currentDateKey]);
 
   const amEntry = calendar[currentDateKey]?.AM || "";
