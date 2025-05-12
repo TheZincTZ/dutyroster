@@ -22,6 +22,7 @@ export interface CalendarEntry {
 export type CalendarMap = { [date: string]: CalendarEntry };
 
 export async function storeRosterData(calendarData: CalendarMap) {
+  console.log('Storing roster data:', calendarData);
   const { error } = await supabase
     .from('roster_data')
     .upsert(
@@ -41,6 +42,7 @@ export async function storeRosterData(calendarData: CalendarMap) {
 }
 
 export async function getRosterData(): Promise<CalendarMap> {
+  console.log('Fetching roster data from Supabase...');
   const { data, error } = await supabase
     .from('roster_data')
     .select('*')
@@ -50,6 +52,8 @@ export async function getRosterData(): Promise<CalendarMap> {
     console.error('Error fetching roster data:', error);
     throw error;
   }
+
+  console.log('Raw data from Supabase:', data);
 
   const calendarMap: CalendarMap = {};
   data.forEach((row) => {
@@ -61,5 +65,6 @@ export async function getRosterData(): Promise<CalendarMap> {
     };
   });
 
+  console.log('Processed calendar map:', calendarMap);
   return calendarMap;
 } 
