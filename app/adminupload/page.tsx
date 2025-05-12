@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap } from "../lib/kv-storage";
+import { storeRosterData, getRosterData, CalendarMap } from "../lib/supabase";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";

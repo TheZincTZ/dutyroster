@@ -10,9 +10,8 @@
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
-    "@vercel/edge-config": "^1.4.0",
+    "@supabase/supabase-js": "^2.39.7",
     "@vercel/kv": "^3.0.0",
-    "@vercel/postgres": "^0.10.0",
     "googleapis": "^148.0.0",
     "next": "15.3.2",
     "react": "^19.0.0",
