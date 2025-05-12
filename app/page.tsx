@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, RosterData } from "./lib/db";
+import { getRosterData } from "./lib/db";
 
 type CalendarEntry = {
   AM: string;

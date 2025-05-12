@@ -50,7 +50,6 @@ function getMay2025CalendarData(matrix: string[][]): CalendarMap {
 }
 
 export default function AdminUpload() {
-  const [data, setData] = useState<string[][]>([]);
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +65,6 @@ export default function AdminUpload() {
       try {
         const rosterData = await getRosterData();
         if (rosterData.length > 0) {
-          // Convert roster data back to matrix format
-          const matrix: string[][] = [];
           const calendarData: CalendarMap = {};
           
           rosterData.forEach(entry => {
@@ -132,7 +129,6 @@ export default function AdminUpload() {
       });
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
-      setData(result.data);
       const newCalendar = getMay2025CalendarData(result.data);
       setCalendar(newCalendar);
       
