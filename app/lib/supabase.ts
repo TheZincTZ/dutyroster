@@ -16,6 +16,15 @@ export type CalendarMap = {
   [date: string]: CalendarEntry;
 };
 
+interface RosterRecord {
+  id?: number;
+  date: string;
+  am: string;
+  pm: string;
+  reserve_am: string;
+  reserve_pm: string;
+}
+
 export async function getRosterData(): Promise<CalendarMap> {
   try {
     console.log('Fetching data from Supabase...');
@@ -37,7 +46,7 @@ export async function getRosterData(): Promise<CalendarMap> {
 
     // Convert the array of records to a map
     const calendarMap: CalendarMap = {};
-    data.forEach((record: any) => {
+    data.forEach((record: RosterRecord) => {
       console.log('Processing record:', record);
       calendarMap[record.date] = {
         AM: record.am || '',
@@ -71,7 +80,7 @@ export async function storeRosterData(calendar: CalendarMap): Promise<void> {
     }
 
     // Then insert new data
-    const records = Object.entries(calendar).map(([date, entry]) => ({
+    const records: RosterRecord[] = Object.entries(calendar).map(([date, entry]) => ({
       date,
       am: entry.AM,
       pm: entry.PM,
