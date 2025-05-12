@@ -5,10 +5,6 @@ import { storeRosterData, getRosterData, CalendarMap } from "../lib/supabase";
 import * as XLSX from 'xlsx';
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
-const AM_COLUMN_INDEX = 1; // 0-based: column B
-const PM_COLUMN_INDEX = 2; // 0-based: column C
-const RESERVE_AM_COLUMN_INDEX = 3; // 0-based: column D
-const RESERVE_PM_COLUMN_INDEX = 4; // 0-based: column E
 
 export default function AdminUpload() {
   const [file, setFile] = useState<File | null>(null);
