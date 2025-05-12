@@ -19,14 +19,14 @@ export interface CalendarEntry {
   ReservePM: string;
 }
 
-export type CalendarMap = { [date: number]: CalendarEntry };
+export type CalendarMap = { [date: string]: CalendarEntry };
 
 export async function storeRosterData(calendarData: CalendarMap) {
   const { error } = await supabase
     .from('roster_data')
     .upsert(
       Object.entries(calendarData).map(([date, entry]) => ({
-        date: parseInt(date),
+        date: date,
         am: entry.AM,
         pm: entry.PM,
         reserve_am: entry.ReserveAM,

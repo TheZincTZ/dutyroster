@@ -16,25 +16,31 @@ function getShiftInfo(now: Date) {
       shift: "AM",
       shiftLabel: "AM Shift (7:30am - 7:30pm)",
       date: now.getDate(),
+      month: now.getMonth(),
+      year: now.getFullYear(),
       nextShift: "PM",
       nextDate: now.getDate(),
+      nextMonth: now.getMonth(),
+      nextYear: now.getFullYear(),
     };
   } else {
     // PM shift
     // If after 7:30pm, use today; if before 7:30am, use previous day
-    let pmDate = now.getDate();
+    let pmDate = new Date(now);
     if (now < amStart) {
       // Before 7:30am, PM shift is for previous day
-      const prev = new Date(now);
-      prev.setDate(now.getDate() - 1);
-      pmDate = prev.getDate();
+      pmDate.setDate(now.getDate() - 1);
     }
     return {
       shift: "PM",
       shiftLabel: "PM Shift (7:30pm - 7:30am)",
-      date: pmDate,
+      date: pmDate.getDate(),
+      month: pmDate.getMonth(),
+      year: pmDate.getFullYear(),
       nextShift: "AM",
       nextDate: now.getDate(),
+      nextMonth: now.getMonth(),
+      nextYear: now.getFullYear(),
     };
   }
 }
@@ -71,10 +77,12 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const amEntry = calendar[shiftInfo.date]?.AM || "";
-  const pmEntry = calendar[shiftInfo.date]?.PM || "";
-  const amReserve = calendar[shiftInfo.date]?.ReserveAM || "";
-  const pmReserve = calendar[shiftInfo.date]?.ReservePM || "";
+  // Create a unique key for the current date that includes month and year
+  const currentDateKey = `${shiftInfo.year}-${shiftInfo.month + 1}-${shiftInfo.date}`;
+  const amEntry = calendar[currentDateKey]?.AM || "";
+  const pmEntry = calendar[currentDateKey]?.PM || "";
+  const amReserve = calendar[currentDateKey]?.ReserveAM || "";
+  const pmReserve = calendar[currentDateKey]?.ReservePM || "";
 
   if (loading) {
     return (
