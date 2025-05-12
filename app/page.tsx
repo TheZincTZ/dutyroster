@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap, CalendarEntry } from "./lib/edge-config";
+import { getRosterData, CalendarMap } from "./lib/edge-config";
 
 function getShiftInfo(now: Date) {
   // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
