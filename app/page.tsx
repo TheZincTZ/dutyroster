@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData } from "./lib/db";
+import { getRosterData, CalendarMap } from "./lib/edge-config";
 
 type CalendarEntry = {
   AM: string;
@@ -9,8 +9,6 @@ type CalendarEntry = {
   ReserveAM: string;
   ReservePM: string;
 };
-
-type CalendarMap = { [date: number]: CalendarEntry };
 
 function getShiftInfo(now: Date) {
   // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
@@ -54,27 +52,12 @@ export default function Home() {
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
-  // Load data from database
+  // Load data from Edge Config
   useEffect(() => {
     const loadData = async () => {
       try {
-        const rosterData = await getRosterData();
-        if (rosterData.length > 0) {
-          const calendarData: CalendarMap = {};
-          
-          rosterData.forEach(entry => {
-            const date = new Date(entry.date);
-            const day = date.getDate();
-            calendarData[day] = {
-              AM: entry.personnel,
-              PM: entry.personnel,
-              ReserveAM: entry.scoreboard,
-              ReservePM: entry.scoreboard
-            };
-          });
-          
-          setCalendar(calendarData);
-        }
+        const calendarData = await getRosterData();
+        setCalendar(calendarData);
       } catch (err) {
         console.error('Error loading data:', err);
       } finally {

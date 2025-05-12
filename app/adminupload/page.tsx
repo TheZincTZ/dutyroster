@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, RosterData } from "../lib/db";
+import { storeRosterData, getRosterData, CalendarMap } from "../lib/edge-config";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
@@ -14,8 +14,6 @@ type CalendarEntry = {
   ReserveAM: string;
   ReservePM: string;
 };
-
-type CalendarMap = { [date: number]: CalendarEntry };
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -59,25 +57,12 @@ export default function AdminUpload() {
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
-  // Load from database on mount
+  // Load from Edge Config on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const rosterData = await getRosterData();
-        if (rosterData.length > 0) {
-          const calendarData: CalendarMap = {};
-          
-          rosterData.forEach(entry => {
-            const date = new Date(entry.date);
-            const day = date.getDate();
-            calendarData[day] = {
-              AM: entry.personnel,
-              PM: entry.personnel,
-              ReserveAM: entry.scoreboard,
-              ReservePM: entry.scoreboard
-            };
-          });
-          
+        const calendarData = await getRosterData();
+        if (Object.keys(calendarData).length > 0) {
           setCalendar(calendarData);
         }
       } catch (err) {
@@ -132,14 +117,8 @@ export default function AdminUpload() {
       const newCalendar = getMay2025CalendarData(result.data);
       setCalendar(newCalendar);
       
-      // Convert calendar data to roster data format and store in database
-      const rosterData: RosterData[] = Object.entries(newCalendar).map(([day, entry]) => ({
-        date: `2025-05-${day.padStart(2, '0')}`,
-        personnel: entry.AM,
-        scoreboard: entry.ReserveAM
-      }));
-      
-      await storeRosterData(rosterData);
+      // Store the calendar data in Edge Config
+      await storeRosterData(newCalendar);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
