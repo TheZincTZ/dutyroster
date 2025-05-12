@@ -56,6 +56,7 @@ export default function Home() {
     const loadData = async () => {
       try {
         const calendarData = await getRosterData();
+        console.log('Loaded calendar data:', calendarData);
         setCalendar(calendarData);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -79,6 +80,9 @@ export default function Home() {
 
   // Create a unique key for the current date that includes month and year
   const currentDateKey = `${shiftInfo.year}-${shiftInfo.month + 1}-${shiftInfo.date}`;
+  console.log('Current date key:', currentDateKey);
+  console.log('Calendar data for current date:', calendar[currentDateKey]);
+
   const amEntry = calendar[currentDateKey]?.AM || "";
   const pmEntry = calendar[currentDateKey]?.PM || "";
   const amReserve = calendar[currentDateKey]?.ReserveAM || "";
