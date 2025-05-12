@@ -19,7 +19,9 @@ const EDGE_CONFIG_KEY = 'duty_roster_data';
 
 export async function storeRosterData(calendarData: CalendarMap) {
   const config = createClient(process.env.EDGE_CONFIG);
-  await config.put(EDGE_CONFIG_KEY, JSON.stringify(calendarData));
+  await config.set({
+    [EDGE_CONFIG_KEY]: JSON.stringify(calendarData)
+  });
 }
 
 export async function getRosterData(): Promise<CalendarMap> {
