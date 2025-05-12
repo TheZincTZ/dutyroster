@@ -79,7 +79,7 @@ export default function Home() {
   }, []);
 
   // Create a unique key for the current date that includes month and year
-  const currentDateKey = `${shiftInfo.year}-${shiftInfo.month + 1}-${shiftInfo.date}`;
+  const currentDateKey = `${shiftInfo.year}-${String(shiftInfo.month + 1).padStart(2, '0')}-${String(shiftInfo.date).padStart(2, '0')}`;
   console.log('Current date key:', currentDateKey);
   console.log('Calendar data for current date:', calendar[currentDateKey]);
 

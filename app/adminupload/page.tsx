@@ -65,7 +65,8 @@ export default function AdminUpload() {
         const date = parseInt(dateCell.v.toString());
         if (isNaN(date)) return;
 
-        const dateKey = `${currentYear}-${currentMonth}-${date}`;
+        // Format date as YYYY-MM-DD
+        const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
         newCalendar[dateKey] = {
           AM: worksheet[`B${rowIndex + 1}`]?.v?.toString() || "",
           PM: worksheet[`C${rowIndex + 1}`]?.v?.toString() || "",
