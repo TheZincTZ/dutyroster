@@ -83,7 +83,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
       <div className="max-w-lg w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-6 text-green-800 text-center">Today's Duty Roster</h1>
+        <h1 className="text-3xl font-bold mb-6 text-green-800 text-center">Duty Roster</h1>
         <div className="mb-2 text-center text-green-700 text-xl font-semibold">
           {now.toLocaleString("en-US", { month: "long" })} {shiftInfo.date}, 2025
         </div>
