@@ -85,10 +85,18 @@ export default function Home() {
   console.log('All calendar keys:', Object.keys(calendar));
   console.log('Calendar data for current date:', calendar[currentDateKey]);
 
-  const amEntry = calendar[currentDateKey]?.AM || "";
-  const pmEntry = calendar[currentDateKey]?.PM || "";
-  const amReserve = calendar[currentDateKey]?.ReserveAM || "";
-  const pmReserve = calendar[currentDateKey]?.ReservePM || "";
+  // Get the data for the current date
+  const currentData = calendar[currentDateKey] || {
+    AM: "",
+    PM: "",
+    ReserveAM: "",
+    ReservePM: ""
+  };
+
+  const amEntry = currentData.AM;
+  const pmEntry = currentData.PM;
+  const amReserve = currentData.ReserveAM;
+  const pmReserve = currentData.ReservePM;
 
   if (loading) {
     return (
