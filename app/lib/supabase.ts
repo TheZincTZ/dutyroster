@@ -1,16 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-}
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface CalendarEntry {
   AM: string;
@@ -19,52 +12,86 @@ export interface CalendarEntry {
   ReservePM: string;
 }
 
-export type CalendarMap = { [date: string]: CalendarEntry };
+export type CalendarMap = {
+  [date: string]: CalendarEntry;
+};
 
-export async function storeRosterData(calendarData: CalendarMap) {
-  console.log('Storing roster data:', calendarData);
-  const { error } = await supabase
-    .from('roster_data')
-    .upsert(
-      Object.entries(calendarData).map(([date, entry]) => ({
-        date: date,
-        am: entry.AM,
-        pm: entry.PM,
-        reserve_am: entry.ReserveAM,
-        reserve_pm: entry.ReservePM,
-      }))
-    );
+export async function getRosterData(): Promise<CalendarMap> {
+  try {
+    console.log('Fetching data from Supabase...');
+    const { data, error } = await supabase
+      .from('roster')
+      .select('*');
 
-  if (error) {
-    console.error('Error storing roster data:', error);
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    console.log('Raw data from Supabase:', data);
+
+    if (!data || data.length === 0) {
+      console.log('No data found in Supabase');
+      return {};
+    }
+
+    // Convert the array of records to a map
+    const calendarMap: CalendarMap = {};
+    data.forEach((record: any) => {
+      console.log('Processing record:', record);
+      calendarMap[record.date] = {
+        AM: record.am || '',
+        PM: record.pm || '',
+        ReserveAM: record.reserve_am || '',
+        ReservePM: record.reserve_pm || '',
+      };
+    });
+
+    console.log('Processed calendar map:', calendarMap);
+    return calendarMap;
+  } catch (error) {
+    console.error('Error in getRosterData:', error);
     throw error;
   }
 }
 
-export async function getRosterData(): Promise<CalendarMap> {
-  console.log('Fetching roster data from Supabase...');
-  const { data, error } = await supabase
-    .from('roster_data')
-    .select('*')
-    .order('date');
+export async function storeRosterData(calendar: CalendarMap): Promise<void> {
+  try {
+    console.log('Storing data in Supabase:', calendar);
+    
+    // First, clear existing data
+    const { error: deleteError } = await supabase
+      .from('roster')
+      .delete()
+      .neq('id', 0); // Delete all records
 
-  if (error) {
-    console.error('Error fetching roster data:', error);
+    if (deleteError) {
+      console.error('Error deleting existing data:', deleteError);
+      throw deleteError;
+    }
+
+    // Then insert new data
+    const records = Object.entries(calendar).map(([date, entry]) => ({
+      date,
+      am: entry.AM,
+      pm: entry.PM,
+      reserve_am: entry.ReserveAM,
+      reserve_pm: entry.ReservePM,
+    }));
+
+    console.log('Inserting records:', records);
+    const { error: insertError } = await supabase
+      .from('roster')
+      .insert(records);
+
+    if (insertError) {
+      console.error('Error inserting new data:', insertError);
+      throw insertError;
+    }
+
+    console.log('Data stored successfully');
+  } catch (error) {
+    console.error('Error in storeRosterData:', error);
     throw error;
   }
-
-  console.log('Raw data from Supabase:', data);
-
-  const calendarMap: CalendarMap = {};
-  data.forEach((row) => {
-    calendarMap[row.date] = {
-      AM: row.am,
-      PM: row.pm,
-      ReserveAM: row.reserve_am,
-      ReservePM: row.reserve_pm,
-    };
-  });
-
-  console.log('Processed calendar map:', calendarMap);
-  return calendarMap;
 } 
