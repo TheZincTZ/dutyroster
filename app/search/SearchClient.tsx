@@ -1,175 +1,151 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getRosterData, CalendarMap } from "../lib/supabase";
-import Link from 'next/link';
+import { useState } from "react";
+import { supabase } from "../lib/supabase";
+import Link from "next/link";
 
-type DutyEntry = {
+type Duty = {
   date: number;
   shift: string;
   type: string;
 };
 
 export default function SearchClient() {
-  const [calendar, setCalendar] = useState<CalendarMap>({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<DutyEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [results, setResults] = useState<Duty[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load data from Supabase
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadData = async () => {
-      try {
-        const calendarData = await getRosterData();
-        if (isMounted) {
-          setCalendar(calendarData);
-        }
-      } catch (err) {
-        console.error('Error loading data:', err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    
-    loadData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
 
-  // Search function
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: rosterData, error: rosterError } = await supabase
+        .from("roster_data")
+        .select("*");
+
+      if (rosterError) throw rosterError;
+
+      const duties: Duty[] = [];
+      rosterData?.forEach((day) => {
+        if (day.AM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          duties.push({ date: day.date, shift: "AM", type: "Primary" });
+        }
+        if (day.PM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          duties.push({ date: day.date, shift: "PM", type: "Primary" });
+        }
+        if (day.ReserveAM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          duties.push({ date: day.date, shift: "AM", type: "Reserve" });
+        }
+        if (day.ReservePM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+          duties.push({ date: day.date, shift: "PM", type: "Reserve" });
+        }
+      });
+
+      setResults(duties);
+    } catch (err) {
+      setError("Failed to search duties");
+      console.error("Search error:", err);
+    } finally {
+      setLoading(false);
     }
-
-    const query = searchQuery.toLowerCase().trim();
-    const results: DutyEntry[] = [];
-
-    // Search through all dates
-    Object.entries(calendar).forEach(([date, entry]) => {
-      const dateNum = parseInt(date);
-      
-      // Check AM shift
-      if (entry.AM.toLowerCase().includes(query)) {
-        results.push({
-          date: dateNum,
-          shift: "AM",
-          type: "Primary"
-        });
-      }
-      if (entry.ReserveAM.toLowerCase().includes(query)) {
-        results.push({
-          date: dateNum,
-          shift: "AM",
-          type: "Reserve"
-        });
-      }
-      
-      // Check PM shift
-      if (entry.PM.toLowerCase().includes(query)) {
-        results.push({
-          date: dateNum,
-          shift: "PM",
-          type: "Primary"
-        });
-      }
-      if (entry.ReservePM.toLowerCase().includes(query)) {
-        results.push({
-          date: dateNum,
-          shift: "PM",
-          type: "Reserve"
-        });
-      }
-    });
-
-    setSearchResults(results);
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
-          <p className="text-green-700">Loading duty roster...</p>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-            <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
+    <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
             Search Personnel
           </h1>
           <Link 
             href="/" 
-            className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold"
+            className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center"
           >
             Back to Roster
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-10 border border-green-100">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Enter personnel name..."
-              className="flex-1 px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-green-900 placeholder-green-400 text-lg"
+              className="flex-1 px-4 py-2 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-lg"
             />
             <button
-              onClick={handleSearch}
-              className="px-6 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition-colors font-semibold text-lg"
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-center"
             >
-              Search
+              {loading ? "Searching..." : "Search"}
             </button>
           </div>
-        </div>
+        </form>
 
-        {searchResults.length > 0 ? (
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-green-100">
-            <h2 className="text-2xl font-bold text-green-800 mb-6 flex items-center gap-2">
-              <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
-              Found {searchResults.length} duties for <span className="text-green-900 font-bold">&ldquo;{searchQuery}&rdquo;</span>
-            </h2>
-            <div className="space-y-4">
-              {searchResults.map((result, index) => (
-                <div 
-                  key={index}
-                  className="p-4 border border-green-200 rounded-xl bg-green-50 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold text-green-700">May {result.date}:</span>
-                      <span className="ml-2 text-green-800">
-                        {result.shift} Shift ({result.type})
-                      </span>
-                    </div>
-                    <div className="text-sm text-green-600">
-                      {result.shift === "AM" ? "7:30am - 7:30pm" : "7:30pm - 7:30am"}
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {/* Results Section */}
+        {error && (
+          <div className="text-center text-red-600 text-base sm:text-lg font-medium py-4">
+            {error}
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="space-y-6">
+            <div className="text-center text-green-700 text-base sm:text-lg">
+              Found <span className="font-bold">{results.length}</span> duties for{" "}
+              <span className="font-bold text-green-900">{searchTerm}</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-green-200 rounded-xl overflow-hidden">
+                <thead>
+                  <tr className="bg-green-100">
+                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Date</th>
+                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Shift</th>
+                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map((duty, idx) => (
+                    <tr 
+                      key={`${duty.date}-${duty.shift}-${duty.type}`}
+                      className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}
+                    >
+                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-base sm:text-lg">
+                        {new Date(2024, 0, duty.date).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric"
+                        })}
+                      </td>
+                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
+                        {duty.shift}
+                      </td>
+                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
+                        {duty.type}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        ) : searchQuery ? (
-          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center text-green-700 border border-green-100">
-            <span className="text-2xl">🔍</span>
-            <div className="mt-2">No duties found for <span className="text-green-900 font-bold">&ldquo;{searchQuery}&rdquo;</span></div>
+        )}
+
+        {!loading && !error && searchTerm && results.length === 0 && (
+          <div className="text-center text-green-700 text-base sm:text-lg font-medium py-8">
+            No duties found for "{searchTerm}"
           </div>
-        ) : null}
+        )}
       </div>
     </main>
   );
