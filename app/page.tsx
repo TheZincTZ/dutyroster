@@ -10,34 +10,34 @@ function getShiftInfo(now: Date) {
   const pmStart = new Date(now);
   pmStart.setHours(19, 30, 0, 0);
 
-  // Create a date key that includes both month and day
-  const getDateKey = (date: Date) => `${date.getMonth() + 1}-${date.getDate()}`;
+  // Get the current date number (1-31)
+  const currentDate = now.getDate();
 
   if (now >= amStart && now < pmStart) {
     // AM shift
     return {
       shift: "AM",
       shiftLabel: "AM Shift (7:30am - 7:30pm)",
-      date: getDateKey(now),
+      date: currentDate,
       nextShift: "PM",
-      nextDate: getDateKey(now),
+      nextDate: currentDate,
     };
   } else {
     // PM shift
     // If after 7:30pm, use today; if before 7:30am, use previous day
-    let pmDate = now;
+    let pmDate = currentDate;
     if (now < amStart) {
       // Before 7:30am, PM shift is for previous day
       const prev = new Date(now);
       prev.setDate(now.getDate() - 1);
-      pmDate = prev;
+      pmDate = prev.getDate();
     }
     return {
       shift: "PM",
       shiftLabel: "PM Shift (7:30pm - 7:30am)",
-      date: getDateKey(pmDate),
+      date: pmDate,
       nextShift: "AM",
-      nextDate: getDateKey(now),
+      nextDate: currentDate,
     };
   }
 }
@@ -94,13 +94,15 @@ export default function Home() {
     };
   }, []);
 
-  const amEntry = calendar[shiftInfo.date]?.AM || "";
-  const pmEntry = calendar[shiftInfo.date]?.PM || "";
-  const amReserve = calendar[shiftInfo.date]?.ReserveAM || "";
-  const pmReserve = calendar[shiftInfo.date]?.ReservePM || "";
+  // Get the current date's personnel data
+  const currentDate = now.getDate();
+  const amEntry = calendar[currentDate]?.AM || "";
+  const pmEntry = calendar[currentDate]?.PM || "";
+  const amReserve = calendar[currentDate]?.ReserveAM || "";
+  const pmReserve = calendar[currentDate]?.ReservePM || "";
 
   if (loading) {
-  return (
+    return (
       <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
@@ -132,7 +134,7 @@ export default function Home() {
           <div className="mb-2"><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{pmEntry}</span></div>
           <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{pmReserve}</span></div>
         </div>
-    </div>
+      </div>
     </main>
   );
 }
