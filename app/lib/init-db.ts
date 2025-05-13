@@ -14,12 +14,32 @@ const supabase = createClient(
 
 export async function initDatabase() {
   try {
-    // Create the roster table if it doesn't exist
-    const { error: createTableError } = await supabase.rpc('create_roster_table');
-    
-    if (createTableError) {
-      console.error('Error creating table:', createTableError);
+    // Try to insert a test record to check if table exists
+    const { error: insertError } = await supabase
+      .from('roster')
+      .insert({
+        date: 'test',
+        am: 'test',
+        pm: 'test',
+        reserve_am: 'test',
+        reserve_pm: 'test'
+      })
+      .select();
+
+    if (insertError) {
+      console.error('Error checking table:', insertError);
+      // If the error is about the table not existing, we'll handle it in the UI
       return false;
+    }
+
+    // If we get here, the table exists and we can delete the test record
+    const { error: deleteError } = await supabase
+      .from('roster')
+      .delete()
+      .eq('date', 'test');
+
+    if (deleteError) {
+      console.error('Error deleting test record:', deleteError);
     }
 
     return true;

@@ -56,6 +56,8 @@ export default function AdminUpload() {
       }
 
       const newCalendar: CalendarMap = { ...calendar };
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1; // 1-12
 
       DATE_ROW_INDEXES.forEach((rowIndex) => {
         const dateCell = worksheet[`A${rowIndex + 1}`];
@@ -64,8 +66,8 @@ export default function AdminUpload() {
         const date = parseInt(dateCell.v.toString());
         if (isNaN(date)) return;
 
-        // Use just the day number as the key
-        const dateKey = String(date);
+        // Format date as YYYY-MM-DD
+        const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
         console.log('Processing date:', dateKey);
         
         newCalendar[dateKey] = {
