@@ -14,7 +14,7 @@ export default function TodayTomorrowPage() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [today, setToday] = useState(new Date());
+  const [today] = useState(new Date());
 
   useEffect(() => {
     const loadData = async () => {
@@ -45,7 +45,7 @@ export default function TodayTomorrowPage() {
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-lg mx-auto bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-green-800">Today's & Tomorrow's Duty</h1>
+          <h1 className="text-2xl font-bold text-green-800">Today&rsquo;s &amp; Tomorrow&rsquo;s Duty</h1>
           <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Back to Roster</Link>
         </div>
         {loading ? (
