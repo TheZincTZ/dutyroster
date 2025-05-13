@@ -61,14 +61,21 @@ export default function AdminUpload() {
       // Extract duty roster data
       const calendarData: CalendarMap = {};
       for (let row = 2; row <= 32; row++) {
-        const date = worksheet[`A${row}`]?.v;
-        if (date) {
-          calendarData[date] = {
-            AM: worksheet[`B${row}`]?.v || "",
-            PM: worksheet[`C${row}`]?.v || "",
-            ReserveAM: worksheet[`D${row}`]?.v || "",
-            ReservePM: worksheet[`E${row}`]?.v || "",
-          };
+        const dateCell = worksheet[`A${row}`]?.v;
+        if (dateCell) {
+          // Extract numeric date from the cell value
+          const dateMatch = String(dateCell).match(/\d+/);
+          if (dateMatch) {
+            const dateNum = parseInt(dateMatch[0], 10);
+            if (!isNaN(dateNum)) {
+              calendarData[dateNum] = {
+                AM: worksheet[`B${row}`]?.v?.toString() || "",
+                PM: worksheet[`C${row}`]?.v?.toString() || "",
+                ReserveAM: worksheet[`D${row}`]?.v?.toString() || "",
+                ReservePM: worksheet[`E${row}`]?.v?.toString() || "",
+              };
+            }
+          }
         }
       }
 
@@ -78,12 +85,16 @@ export default function AdminUpload() {
         const name = worksheet[`F${row}`]?.v;
         const numberOfExtras = worksheet[`G${row}`]?.v;
         
-        if (name && numberOfExtras !== undefined) {
-          extrasData.push({
-            id: row - 27, // Generate sequential IDs starting from 1
-            name: name.toString(),
-            number_of_extras: Number(numberOfExtras)
-          });
+        if (name && numberOfExtras !== undefined && numberOfExtras !== null) {
+          // Convert numberOfExtras to a number, defaulting to 0 if invalid
+          const extrasNum = Number(numberOfExtras);
+          if (!isNaN(extrasNum)) {
+            extrasData.push({
+              id: row - 27, // Generate sequential IDs starting from 1
+              name: name.toString().trim(),
+              number_of_extras: extrasNum
+            });
+          }
         }
       }
 
