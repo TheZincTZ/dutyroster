@@ -146,6 +146,10 @@ export default function SearchClient() {
               ))}
             </ul>
           )}
+          {/* Search hint */}
+          <div className="mt-2 text-green-700 text-xs sm:text-sm text-center">
+            Start typing a name to search for personnel duties.
+          </div>
         </form>
 
         {/* Results Section */}
@@ -155,51 +159,49 @@ export default function SearchClient() {
           </div>
         )}
 
-        {selectedName && results.length > 0 && (
+        {selectedName && (
           <div className="space-y-6">
-            <div className="text-center text-green-700 text-base sm:text-lg">
-              Found <span className="font-bold">{results.length}</span> duties for{" "}
-              <span className="font-bold text-green-900">{selectedName}</span>
+            <div className="text-center">
+              <span className="inline-block px-4 py-2 bg-green-100 text-green-900 rounded-lg font-semibold text-base sm:text-lg shadow">
+                {results.length > 0
+                  ? `Found ${results.length} dut${results.length === 1 ? 'y' : 'ies'} for "${selectedName}"`
+                  : `No duties found for "${selectedName}"`}
+              </span>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-green-200 rounded-xl overflow-hidden">
-                <thead>
-                  <tr className="bg-green-100">
-                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Date</th>
-                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Shift</th>
-                    <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((duty, idx) => (
-                    <tr 
-                      key={`${duty.date}-${duty.shift}-${duty.type}`}
-                      className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}
-                    >
-                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-base sm:text-lg">
-                        {new Date(2024, 0, duty.date).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric"
-                        })}
-                      </td>
-                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
-                        {duty.shift}
-                      </td>
-                      <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
-                        {duty.type}
-                      </td>
+            {results.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-green-200 rounded-xl overflow-hidden">
+                  <thead>
+                    <tr className="bg-green-100">
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Date</th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Shift</th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Type</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {selectedName && results.length === 0 && (
-          <div className="text-center text-green-700 text-base sm:text-lg font-medium py-8">
-            No duties found for &quot;{selectedName}&quot;
+                  </thead>
+                  <tbody>
+                    {results.map((duty, idx) => (
+                      <tr 
+                        key={`${duty.date}-${duty.shift}-${duty.type}`}
+                        className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}
+                      >
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-base sm:text-lg">
+                          {new Date(2024, 0, duty.date).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric"
+                          })}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
+                          {duty.shift}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
+                          {duty.type}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
