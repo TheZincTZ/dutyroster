@@ -27,6 +27,17 @@ export default function SearchClient() {
   const [error, setError] = useState<string | null>(null);
   const [rosterData, setRosterData] = useState<RosterRow[]>([]);
 
+  // Helper to extract all names from a cell
+  function extractNames(cell: string): string[] {
+    if (!cell) return [];
+    // Remove parentheses, split by comma and &
+    return cell
+      .replace(/[()]/g, "")
+      .split(/,|&/)
+      .map((n) => n.trim().toLowerCase())
+      .filter((n) => n.length > 0);
+  }
+
   // Load all unique personnel names on mount
   useEffect(() => {
     const fetchRoster = async () => {
@@ -38,13 +49,8 @@ export default function SearchClient() {
         // Extract all unique names from all fields
         const nameSet = new Set<string>();
         data?.forEach((row: RosterRow) => {
-          [row.AM, row.PM, row.ReserveAM, row.ReservePM].forEach((cell) => {
-            if (cell) {
-              cell.split(",").forEach((n: string) => {
-                const name = n.trim();
-                if (name) nameSet.add(name);
-              });
-            }
+          [row.AM ?? row.am, row.PM ?? row.pm, row.ReserveAM ?? row.reserve_am, row.ReservePM ?? row.reserve_pm].forEach((cell) => {
+            extractNames(cell).forEach((name) => nameSet.add(name));
           });
         });
         setAllNames(Array.from(nameSet));
@@ -63,8 +69,9 @@ export default function SearchClient() {
       setResults([]);
       return;
     }
+    const search = searchTerm.trim().toLowerCase();
     const suggestions = allNames.filter((name) =>
-      name.toLowerCase().includes(searchTerm.trim().toLowerCase())
+      name.includes(search)
     );
     setNameSuggestions(suggestions);
     setSelectedName(null);
@@ -78,17 +85,14 @@ export default function SearchClient() {
     console.log('Selected name:', selectedName);
     console.log('Roster data:', rosterData);
     const duties: Duty[] = [];
+    const searchName = selectedName.trim().toLowerCase();
     rosterData.forEach((day) => {
       // Support both uppercase and lowercase field names
       const am = day.AM ?? day.am ?? '';
       const pm = day.PM ?? day.pm ?? '';
       const reserveAM = day.ReserveAM ?? day.reserve_am ?? '';
       const reservePM = day.ReservePM ?? day.reserve_pm ?? '';
-      const check = (cell: string) =>
-        cell
-          ?.split(',')
-          .map((n: string) => n.trim().toLowerCase())
-          .includes(selectedName.trim().toLowerCase());
+      const check = (cell: string) => extractNames(cell).includes(searchName);
       if (check(am)) {
         duties.push({ date: day.date, shift: "AM", type: "Primary" });
       }
