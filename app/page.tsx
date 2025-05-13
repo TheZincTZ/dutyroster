@@ -3,20 +3,6 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
 
-function getShiftLabel(now: Date) {
-  // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
-  const amStart = new Date(now);
-  amStart.setHours(7, 30, 0, 0);
-  const pmStart = new Date(now);
-  pmStart.setHours(19, 30, 0, 0);
-
-  if (now >= amStart && now < pmStart) {
-    return "AM Shift (7:30am - 7:30pm)";
-  } else {
-    return "PM Shift (7:30pm - 7:30am)";
-  }
-}
-
 export default function Home() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [now, setNow] = useState(new Date());
@@ -72,7 +58,6 @@ export default function Home() {
   const pmEntry = calendar[currentDate]?.PM || "";
   const amReserve = calendar[currentDate]?.ReserveAM || "";
   const pmReserve = calendar[currentDate]?.ReservePM || "";
-  const shiftLabel = getShiftLabel(now);
 
   if (loading) {
     return (
