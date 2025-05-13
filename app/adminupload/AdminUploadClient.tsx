@@ -156,7 +156,16 @@ export default function AdminUploadClient() {
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600">Too many incorrect attempts. Please contact the administrator.</p>
+          <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
+          <button
+            className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold"
+            onClick={() => {
+              localStorage.removeItem("adminUploadPinLock");
+              window.location.reload();
+            }}
+          >
+            Unlock
+          </button>
         </div>
       </main>
     );
