@@ -3,49 +3,23 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
 
-function getShiftInfo(now: Date) {
+function getShiftLabel(now: Date) {
   // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
   const amStart = new Date(now);
   amStart.setHours(7, 30, 0, 0);
   const pmStart = new Date(now);
   pmStart.setHours(19, 30, 0, 0);
 
-  // Get the current date number (1-31)
-  const currentDate = now.getDate();
-
   if (now >= amStart && now < pmStart) {
-    // AM shift
-    return {
-      shift: "AM",
-      shiftLabel: "AM Shift (7:30am - 7:30pm)",
-      date: currentDate,
-      nextShift: "PM",
-      nextDate: currentDate,
-    };
+    return "AM Shift (7:30am - 7:30pm)";
   } else {
-    // PM shift
-    // If after 7:30pm, use today; if before 7:30am, use previous day
-    let pmDate = currentDate;
-    if (now < amStart) {
-      // Before 7:30am, PM shift is for previous day
-      const prev = new Date(now);
-      prev.setDate(now.getDate() - 1);
-      pmDate = prev.getDate();
-    }
-    return {
-      shift: "PM",
-      shiftLabel: "PM Shift (7:30pm - 7:30am)",
-      date: pmDate,
-      nextShift: "AM",
-      nextDate: currentDate,
-    };
+    return "PM Shift (7:30pm - 7:30am)";
   }
 }
 
 export default function Home() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [now, setNow] = useState(new Date());
-  const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
   // Load data from Supabase
@@ -74,15 +48,13 @@ export default function Home() {
     };
   }, []);
 
-  // Live clock and shift update
+  // Live clock update
   useEffect(() => {
     let isMounted = true;
     
     const updateTime = () => {
       if (isMounted) {
-        const newNow = new Date();
-        setNow(newNow);
-        setShiftInfo(getShiftInfo(newNow));
+        setNow(new Date());
       }
     };
 
@@ -100,6 +72,7 @@ export default function Home() {
   const pmEntry = calendar[currentDate]?.PM || "";
   const amReserve = calendar[currentDate]?.ReserveAM || "";
   const pmReserve = calendar[currentDate]?.ReservePM || "";
+  const shiftLabel = getShiftLabel(now);
 
   if (loading) {
     return (
