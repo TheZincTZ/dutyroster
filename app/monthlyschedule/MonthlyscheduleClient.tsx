@@ -41,29 +41,29 @@ export default function MonthlyscheduleClient() {
   }
 
   return (
-    <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-            <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
+    <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
             May 2025 Duty Roster
           </h1>
-          <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold">Back to Roster</Link>
+          <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
         {loading ? (
-          <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2">
+          <div className="text-center text-green-700 text-base sm:text-lg font-medium flex flex-col items-center gap-2 py-8">
             <span className="text-3xl animate-spin">🌀</span>
             Loading...
           </div>
         ) : error ? (
-          <div className="text-center text-red-600 text-lg font-medium">{error}</div>
+          <div className="text-center text-red-600 text-base sm:text-lg font-medium py-8">{error}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-green-300 rounded-xl overflow-hidden">
+            <table className="min-w-full bg-white border border-green-300 rounded-xl overflow-hidden text-xs sm:text-sm md:text-base">
               <thead>
                 <tr>
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                    <th key={idx} className="px-2 py-3 border bg-green-100 text-base font-semibold text-green-700">
+                    <th key={idx} className="px-2 sm:px-3 py-2 sm:py-3 border bg-green-100 text-green-700 font-semibold text-xs sm:text-base">
                       {day}
                     </th>
                   ))}
@@ -73,10 +73,10 @@ export default function MonthlyscheduleClient() {
                 {weeks.map((week, wIdx) => (
                   <tr key={wIdx}>
                     {week.map((date, dIdx) => (
-                      <td key={dIdx} className="align-top px-2 py-2 border min-w-[120px] bg-green-50 hover:bg-green-100 transition">
+                      <td key={dIdx} className="align-top px-1 sm:px-2 py-2 border min-w-[90px] sm:min-w-[120px] bg-green-50 hover:bg-green-100 transition">
                         {date > 0 ? (
                           <div>
-                            <div className="font-bold text-green-700 mb-1 text-lg">{date}</div>
+                            <div className="font-bold text-green-700 mb-1 text-xs sm:text-lg">{date}</div>
                             {calendar[date] && (
                               <div className="space-y-1">
                                 <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>

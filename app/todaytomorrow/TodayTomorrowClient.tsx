@@ -40,26 +40,26 @@ export default function TodayTomorrowClient() {
   const tomorrowEntry = calendar[tomorrowKey];
 
   return (
-    <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-            <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
+    <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
+      <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
             Today&rsquo;s &amp; Tomorrow&rsquo;s Duty
           </h1>
-          <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold">Back to Roster</Link>
+          <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
         {loading ? (
-          <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2">
+          <div className="text-center text-green-700 text-base sm:text-lg font-medium flex flex-col items-center gap-2 py-8">
             <span className="text-3xl animate-spin">🌀</span>
             Loading...
           </div>
         ) : error ? (
-          <div className="text-center text-red-600 text-lg font-medium">{error}</div>
+          <div className="text-center text-red-600 text-base sm:text-lg font-medium py-8">{error}</div>
         ) : (
-          <div className="space-y-10">
-            <div className="bg-green-50 rounded-xl p-6 shadow-sm">
-              <h2 className="text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
+          <div className="space-y-8 sm:space-y-10">
+            <div className="bg-green-50 rounded-xl p-4 sm:p-6 shadow-sm">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
                 <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
                 Today ({todayDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })})
               </h2>
@@ -74,8 +74,8 @@ export default function TodayTomorrowClient() {
                 <div className="text-green-700 flex items-center gap-2"><span>📅</span>No duty data for today.</div>
               )}
             </div>
-            <div className="bg-green-50 rounded-xl p-6 shadow-sm">
-              <h2 className="text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
+            <div className="bg-green-50 rounded-xl p-4 sm:p-6 shadow-sm">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
                 <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
                 Tomorrow ({tomorrowDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })})
               </h2>
