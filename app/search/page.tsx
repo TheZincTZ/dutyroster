@@ -105,29 +105,32 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800">Search Personnel</h1>
+      <div className="max-w-3xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
+            Search Personnel
+          </h1>
           <Link 
             href="/" 
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold"
           >
             Back to Roster
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex gap-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-10 border border-green-100">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Enter personnel name..."
-              className="flex-1 px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-green-900 placeholder-green-400"
+              className="flex-1 px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-green-900 placeholder-green-400 text-lg"
             />
             <button
               onClick={handleSearch}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="px-6 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition-colors font-semibold text-lg"
             >
               Search
             </button>
@@ -135,15 +138,16 @@ export default function SearchPage() {
         </div>
 
         {searchResults.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-green-800 mb-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-green-100">
+            <h2 className="text-2xl font-bold text-green-800 mb-6 flex items-center gap-2">
+              <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
               Found {searchResults.length} duties for <span className="text-green-900 font-bold">&ldquo;{searchQuery}&rdquo;</span>
             </h2>
             <div className="space-y-4">
               {searchResults.map((result, index) => (
                 <div 
                   key={index}
-                  className="p-4 border border-green-200 rounded-lg bg-green-50"
+                  className="p-4 border border-green-200 rounded-xl bg-green-50 shadow-sm hover:shadow-md transition"
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -161,8 +165,9 @@ export default function SearchPage() {
             </div>
           </div>
         ) : searchQuery ? (
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center text-green-700">
-            No duties found for <span className="text-green-900 font-bold">&ldquo;{searchQuery}&rdquo;</span>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center text-green-700 border border-green-100">
+            <span className="text-2xl">🔍</span>
+            <div className="mt-2">No duties found for <span className="text-green-900 font-bold">&ldquo;{searchQuery}&rdquo;</span></div>
           </div>
         ) : null}
       </div>

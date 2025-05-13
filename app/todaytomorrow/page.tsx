@@ -43,45 +43,53 @@ export default function TodayTomorrowPage() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-lg mx-auto bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-green-800">Today&rsquo;s &amp; Tomorrow&rsquo;s Duty</h1>
-          <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Back to Roster</Link>
+      <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
+            Today&rsquo;s &amp; Tomorrow&rsquo;s Duty
+          </h1>
+          <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold">Back to Roster</Link>
         </div>
         {loading ? (
-          <div className="text-center text-green-700">Loading...</div>
+          <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2">
+            <span className="text-3xl animate-spin">🌀</span>
+            Loading...
+          </div>
         ) : error ? (
-          <div className="text-center text-red-600">{error}</div>
+          <div className="text-center text-red-600 text-lg font-medium">{error}</div>
         ) : (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold text-green-700 mb-2">
+          <div className="space-y-10">
+            <div className="bg-green-50 rounded-xl p-6 shadow-sm">
+              <h2 className="text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
+                <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
                 Today ({todayDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })})
               </h2>
               {todayEntry ? (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{todayEntry.AM}</span></div>
                   <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{todayEntry.PM}</span></div>
                   <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{todayEntry.ReserveAM}</span></div>
                   <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{todayEntry.ReservePM}</span></div>
                 </div>
               ) : (
-                <div className="text-green-700">No duty data for today.</div>
+                <div className="text-green-700 flex items-center gap-2"><span>📅</span>No duty data for today.</div>
               )}
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-green-700 mb-2">
+            <div className="bg-green-50 rounded-xl p-6 shadow-sm">
+              <h2 className="text-2xl font-bold text-green-700 mb-4 flex items-center gap-2">
+                <span className="inline-block w-2 h-6 bg-green-600 rounded-full mr-2"></span>
                 Tomorrow ({tomorrowDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })})
               </h2>
               {tomorrowEntry ? (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{tomorrowEntry.AM}</span></div>
                   <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{tomorrowEntry.PM}</span></div>
                   <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{tomorrowEntry.ReserveAM}</span></div>
                   <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{tomorrowEntry.ReservePM}</span></div>
                 </div>
               ) : (
-                <div className="text-green-700">No duty data for tomorrow.</div>
+                <div className="text-green-700 flex items-center gap-2"><span>📅</span>No duty data for tomorrow.</div>
               )}
             </div>
           </div>
