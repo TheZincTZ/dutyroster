@@ -121,7 +121,28 @@ export default function SearchClient() {
         </div>
 
         {/* Search Form */}
-        <form onSubmit={e => e.preventDefault()} className="mb-6 sm:mb-8 relative">
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            // If searchTerm matches a name exactly, select it
+            const exactMatch = allNames.find(
+              (name) => name.toLowerCase() === searchTerm.trim().toLowerCase()
+            );
+            if (exactMatch) {
+              handleSuggestionClick(exactMatch);
+              return;
+            }
+            // If there are suggestions, select the first
+            if (nameSuggestions.length > 0) {
+              handleSuggestionClick(nameSuggestions[0]);
+              return;
+            }
+            // Otherwise, show no duties found for the search term
+            setSelectedName(searchTerm.trim());
+            setResults([]);
+          }}
+          className="mb-6 sm:mb-8 relative"
+        >
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
@@ -131,6 +152,12 @@ export default function SearchClient() {
               className="flex-1 px-4 py-2 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-lg"
               autoComplete="off"
             />
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center"
+            >
+              Search
+            </button>
           </div>
           {/* Suggestions dropdown */}
           {nameSuggestions.length > 0 && (
