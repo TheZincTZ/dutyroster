@@ -268,4 +268,8 @@ export default function AdminUpload() {
       </div>
     </main>
   );
-} 
+}
+
+export const metadata = {
+  title: "Upload Portal",
+}; 
