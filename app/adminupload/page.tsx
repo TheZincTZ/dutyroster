@@ -115,15 +115,9 @@ export default function AdminUpload() {
       // Store the calendar data in Edge Config
       await storeRosterData(newCalendar);
 
-      // Store extras personnel data
-      // Try to get the batch from cell G25 (row 25, col 6, index 24,5)
-      let batch = 'unknown';
-      if (result.data && result.data[24] && result.data[24][6]) {
-        batch = String(result.data[24][6]).trim();
-      }
+      // Store extras personnel data (no batch)
       if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
         await storeExtrasPersonnelData((result.extrasPersonnel as ExtrasPersonnel[]).map((p) => ({
-          batch,
           name: p.name,
           number: p.number
         })));

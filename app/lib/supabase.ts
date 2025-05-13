@@ -64,7 +64,7 @@ export async function getRosterData(): Promise<CalendarMap> {
   return calendarMap;
 }
 
-export async function storeExtrasPersonnelData(extras: { batch: string, name: string, number: number }[]) {
+export async function storeExtrasPersonnelData(extras: { name: string, number: number }[]) {
   const { error } = await supabase
     .from('extras_personnel')
     .upsert(extras);

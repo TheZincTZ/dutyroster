@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
       blankrows: false // Skip empty rows
     });
 
-    // Extract extras personnel from columns F (5) and G (6), rows 28-34 (indices 27-33)
+    // Extract extras personnel from columns F (5) and G (6), rows 29-34 (indices 28-33)
     const extrasPersonnel = [];
-    for (let i = 27; i <= 33; i++) {
+    for (let i = 29; i <= 33; i++) {
       const row = jsonData[i] as unknown[];
       if (!row) continue;
       const name = row[5] ? String(row[5]).trim() : '';
