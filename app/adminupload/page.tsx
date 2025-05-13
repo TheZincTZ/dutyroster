@@ -1,50 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasData, ExtrasPersonnel } from "../lib/supabase";
+import { storeRosterData, storeExtrasData, CalendarMap, ExtrasPersonnel } from "../lib/supabase";
 import * as XLSX from "xlsx";
 
-const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
 
-function getMay2025CalendarData(matrix: string[][]): CalendarMap {
-  const calendar: CalendarMap = {};
-  for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
-    const weekStart = DATE_ROW_INDEXES[w];
-    const dateRow = matrix[weekStart];
-    const amRow = matrix[weekStart + 1];
-    const pmRow = matrix[weekStart + 2];
-    const reserveAmRow = matrix[weekStart + 3];
-    const reservePmRow = matrix[weekStart + 4];
-
-    // For the first week, use columns 3-8 (D-I); for others, use 1-8 (B-I)
-    const colStart = w === 0 ? 3 : 1;
-    const colEnd = 8; // inclusive, column I
-
-    for (let col = colStart; col <= colEnd; col++) {
-      const dateCell = dateRow[col];
-      if (!dateCell) continue;
-      const match = String(dateCell).match(/\d+/);
-      if (!match) continue;
-      const dateNum = parseInt(match[0], 10);
-      if (isNaN(dateNum)) continue;
-      calendar[dateNum] = {
-        AM: amRow[col] || '',
-        PM: pmRow[col] || '',
-        ReserveAM: reserveAmRow[col] || '',
-        ReservePM: reservePmRow[col] || '',
-      };
-    }
-  }
-  return calendar;
-}
-
 export default function AdminUpload() {
-  const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [pinAttempts, setPinAttempts] = useState(0);
@@ -52,22 +17,8 @@ export default function AdminUpload() {
   const [authenticated, setAuthenticated] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Load from Edge Config on mount
+  // Check lock state on mount
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const calendarData = await getRosterData();
-        if (Object.keys(calendarData).length > 0) {
-          setCalendar(calendarData);
-        }
-      } catch (err) {
-        console.error('Error loading data:', err);
-      }
-    };
-    
-    loadData();
-    
-    // Check lock state
     const lockState = localStorage.getItem(PIN_LOCK_KEY);
     if (lockState === "locked") {
       setLocked(true);
@@ -107,7 +58,7 @@ export default function AdminUpload() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Extract duty roster data (existing code)
+      // Extract duty roster data
       const calendarData: CalendarMap = {};
       for (let row = 2; row <= 32; row++) {
         const date = worksheet[`A${row}`]?.v;
@@ -150,23 +101,6 @@ export default function AdminUpload() {
       setLoading(false);
     }
   };
-
-  // Build May 2025 calendar grid
-  const daysInMonth = 31;
-  const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
-  const weeks: number[][] = [];
-  let week: number[] = Array(firstDayOfWeek).fill(0);
-  for (let d = 1; d <= daysInMonth; d++) {
-    week.push(d);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
-    }
-  }
-  if (week.length) {
-    while (week.length < 7) week.push(0);
-    weeks.push(week);
-  }
 
   if (locked) {
     return (
