@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasData, ExtrasPersonnel } from "../lib/supabase";
+import { storeRosterData, CalendarMap, storeExtrasData, ExtrasPersonnel } from "../lib/supabase";
 import * as XLSX from "xlsx";
 
 const ADMIN_PIN = "7954";
