@@ -143,7 +143,7 @@ export default function SearchClient() {
 
         {!loading && !error && searchTerm && results.length === 0 && (
           <div className="text-center text-green-700 text-base sm:text-lg font-medium py-8">
-            No duties found for "{searchTerm}"
+            No duties found for &quot;{searchTerm}&quot;
           </div>
         )}
       </div>
