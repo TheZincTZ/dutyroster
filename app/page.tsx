@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
+import { initDatabase } from "./lib/init-db";
 
 function getShiftInfo(now: Date) {
   // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
@@ -51,10 +52,13 @@ export default function Home() {
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
-  // Load data from Supabase
+  // Initialize database and load data
   useEffect(() => {
-    const loadData = async () => {
+    const initializeAndLoadData = async () => {
       try {
+        console.log('Initializing database...');
+        await initDatabase();
+        
         console.log('Loading data...');
         const calendarData = await getRosterData();
         console.log('Loaded calendar data:', calendarData);
@@ -66,7 +70,7 @@ export default function Home() {
       }
     };
     
-    loadData();
+    initializeAndLoadData();
   }, []);
 
   // Live clock and shift update
