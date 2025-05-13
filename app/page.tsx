@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
-import { initDatabase } from "./lib/init-db";
 
 function getShiftInfo(now: Date) {
   // AM: 7:30am - 7:29pm, PM: 7:30pm - 7:29am next day
@@ -11,37 +10,34 @@ function getShiftInfo(now: Date) {
   const pmStart = new Date(now);
   pmStart.setHours(19, 30, 0, 0);
 
+  // Create a date key that includes both month and day
+  const getDateKey = (date: Date) => `${date.getMonth() + 1}-${date.getDate()}`;
+
   if (now >= amStart && now < pmStart) {
     // AM shift
     return {
       shift: "AM",
       shiftLabel: "AM Shift (7:30am - 7:30pm)",
-      date: now.getDate(),
-      month: now.getMonth(),
-      year: now.getFullYear(),
+      date: getDateKey(now),
       nextShift: "PM",
-      nextDate: now.getDate(),
-      nextMonth: now.getMonth(),
-      nextYear: now.getFullYear(),
+      nextDate: getDateKey(now),
     };
   } else {
     // PM shift
     // If after 7:30pm, use today; if before 7:30am, use previous day
-    const pmDate = new Date(now);
+    let pmDate = now;
     if (now < amStart) {
       // Before 7:30am, PM shift is for previous day
-      pmDate.setDate(now.getDate() - 1);
+      const prev = new Date(now);
+      prev.setDate(now.getDate() - 1);
+      pmDate = prev;
     }
     return {
       shift: "PM",
       shiftLabel: "PM Shift (7:30pm - 7:30am)",
-      date: pmDate.getDate(),
-      month: pmDate.getMonth(),
-      year: pmDate.getFullYear(),
+      date: getDateKey(pmDate),
       nextShift: "AM",
-      nextDate: now.getDate(),
-      nextMonth: now.getMonth(),
-      nextYear: now.getFullYear(),
+      nextDate: getDateKey(now),
     };
   }
 }
@@ -52,16 +48,11 @@ export default function Home() {
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
-  // Initialize database and load data
+  // Load data from Edge Config
   useEffect(() => {
-    const initializeAndLoadData = async () => {
+    const loadData = async () => {
       try {
-        console.log('Initializing database...');
-        await initDatabase();
-        
-        console.log('Loading data...');
         const calendarData = await getRosterData();
-        console.log('Loaded calendar data:', calendarData);
         setCalendar(calendarData);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -70,7 +61,7 @@ export default function Home() {
       }
     };
     
-    initializeAndLoadData();
+    loadData();
   }, []);
 
   // Live clock and shift update
@@ -83,27 +74,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Create a unique key for the current date that includes month and year
-  const currentDateKey = `${shiftInfo.year}-${String(shiftInfo.month + 1).padStart(2, '0')}-${String(shiftInfo.date).padStart(2, '0')}`;
-  console.log('Current date key:', currentDateKey);
-  console.log('All calendar keys:', Object.keys(calendar));
-  console.log('Calendar data for current date:', calendar[currentDateKey]);
-
-  // Get the data for the current date
-  const currentData = calendar[currentDateKey] || {
-    AM: "",
-    PM: "",
-    ReserveAM: "",
-    ReservePM: ""
-  };
-
-  const amEntry = currentData.AM;
-  const pmEntry = currentData.PM;
-  const amReserve = currentData.ReserveAM;
-  const pmReserve = currentData.ReservePM;
+  const amEntry = calendar[shiftInfo.date]?.AM || "";
+  const pmEntry = calendar[shiftInfo.date]?.PM || "";
+  const amReserve = calendar[shiftInfo.date]?.ReserveAM || "";
+  const pmReserve = calendar[shiftInfo.date]?.ReservePM || "";
 
   if (loading) {
-    return (
+  return (
       <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
@@ -135,7 +112,7 @@ export default function Home() {
           <div className="mb-2"><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{pmEntry}</span></div>
           <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{pmReserve}</span></div>
         </div>
-      </div>
+    </div>
     </main>
   );
 }

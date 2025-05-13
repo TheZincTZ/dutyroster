@@ -11,7 +11,7 @@ type CalendarEntry = {
   ReservePM: string;
 };
 
-type CalendarMap = { [date: number]: CalendarEntry };
+type CalendarMap = { [date: string]: CalendarEntry };
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -34,7 +34,9 @@ function getMay2025CalendarData(matrix: string[][]): CalendarMap {
       if (!match) continue;
       const dateNum = parseInt(match[0], 10);
       if (isNaN(dateNum)) continue;
-      calendar[dateNum] = {
+      // Use "5-dateNum" format for May dates
+      const dateKey = `5-${dateNum}`;
+      calendar[dateKey] = {
         AM: amRow[col] || '',
         PM: pmRow[col] || '',
         ReserveAM: reserveAmRow[col] || '',
@@ -165,12 +167,12 @@ export default function MonthlySchedule() {
                         {date > 0 ? (
                           <div>
                             <div className="font-bold text-green-700 mb-1">{date}</div>
-                            {calendar[date] && (
+                            {calendar[`5-${date}`] && (
                               <div>
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
+                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[`5-${date}`]?.AM}</span></div>
+                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[`5-${date}`]?.PM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[`5-${date}`]?.ReserveAM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[`5-${date}`]?.ReservePM}</span></div>
                               </div>
                             )}
                           </div>
