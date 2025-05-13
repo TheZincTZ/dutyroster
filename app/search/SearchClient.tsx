@@ -10,20 +10,26 @@ type Duty = {
   type: string;
 };
 
+interface RosterRow {
+  date: number;
+  AM: string;
+  PM: string;
+  ReserveAM: string;
+  ReservePM: string;
+}
+
 export default function SearchClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [allNames, setAllNames] = useState<string[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [results, setResults] = useState<Duty[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rosterData, setRosterData] = useState<any[]>([]);
+  const [rosterData, setRosterData] = useState<RosterRow[]>([]);
 
   // Load all unique personnel names on mount
   useEffect(() => {
     const fetchRoster = async () => {
-      setLoading(true);
       setError(null);
       try {
         const { data, error } = await supabase.from("roster_data").select("*");
@@ -31,7 +37,7 @@ export default function SearchClient() {
         setRosterData(data || []);
         // Extract all unique names from all fields
         const nameSet = new Set<string>();
-        data?.forEach((row) => {
+        data?.forEach((row: RosterRow) => {
           [row.AM, row.PM, row.ReserveAM, row.ReservePM].forEach((cell) => {
             if (cell) {
               cell.split(",").forEach((n: string) => {
@@ -42,10 +48,8 @@ export default function SearchClient() {
           });
         });
         setAllNames(Array.from(nameSet));
-      } catch (err) {
+      } catch {
         setError("Failed to load roster data");
-      } finally {
-        setLoading(false);
       }
     };
     fetchRoster();
