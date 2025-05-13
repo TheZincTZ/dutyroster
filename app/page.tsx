@@ -95,6 +95,12 @@ export default function Home() {
             >
               View Monthly Schedule
             </Link>
+            <Link
+              href="/todaytomorrow"
+              className="px-4 py-2 bg-green-900 text-white rounded-lg hover:bg-green-950 transition-colors"
+            >
+              View Today & Tomorrow Duty
+            </Link>
           </div>
         </div>
         <div className="mb-2 text-center text-green-700 text-xl font-semibold">
