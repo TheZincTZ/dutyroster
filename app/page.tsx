@@ -89,6 +89,12 @@ export default function Home() {
             >
               View Extras Personnel
             </Link>
+            <Link
+              href="/monthlyschedule"
+              className="px-4 py-2 bg-green-800 text-white rounded-lg hover:bg-green-900 transition-colors"
+            >
+              View Monthly Schedule
+            </Link>
           </div>
         </div>
         <div className="mb-2 text-center text-green-700 text-xl font-semibold">
