@@ -24,7 +24,7 @@ export default function ExtrasPage() {
         .select("id, name, number")
         .order("name");
       if (error) {
-        setError("Failed to load extras personnel");
+        setError("Failed to load extras history");
       } else {
         setExtras(data || []);
       }
@@ -39,7 +39,7 @@ export default function ExtrasPage() {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
             <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
-            Extras Personnel
+            Extras History
           </h1>
           <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold">Back to Roster</Link>
         </div>
@@ -53,7 +53,7 @@ export default function ExtrasPage() {
         ) : extras.length === 0 ? (
           <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2">
             <span className="text-2xl">👤</span>
-            No extras personnel found.
+            No extras history found.
           </div>
         ) : (
           <table className="min-w-full border border-green-200 rounded-xl overflow-hidden">
