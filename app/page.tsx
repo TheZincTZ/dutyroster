@@ -1,6 +1,5 @@
-import Link from 'next/link';
 import { Suspense } from 'react';
-import HomeClient from './HomeClient';
+import HomeClient from '@/app/HomeClient';
 
 export const metadata = {
   title: "Homepage"
