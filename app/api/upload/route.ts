@@ -27,7 +27,19 @@ export async function POST(req: NextRequest) {
       blankrows: false // Skip empty rows
     });
 
-    return NextResponse.json({ data: jsonData });
+    // Extract extras personnel from columns F (5) and G (6), rows 28-34 (indices 27-33)
+    const extrasPersonnel = [];
+    for (let i = 27; i <= 33; i++) {
+      const row = jsonData[i];
+      if (!row) continue;
+      const name = row[5] ? String(row[5]).trim() : '';
+      const number = row[6] ? parseInt(row[6], 10) : null;
+      if (name) {
+        extrasPersonnel.push({ name, number: number || 0 });
+      }
+    }
+
+    return NextResponse.json({ data: jsonData, extrasPersonnel });
   } catch (error) {
     console.error('Error processing file:', error);
     return NextResponse.json(

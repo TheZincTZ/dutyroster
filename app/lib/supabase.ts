@@ -19,20 +19,7 @@ export type CalendarEntry = {
   ReservePM: string;
 }
 
-export type CalendarMap = {
-  [key: string]: {
-    AM: string;
-    PM: string;
-    ReserveAM: string;
-    ReservePM: string;
-  };
-};
-
-export type ExtrasPersonnel = {
-  id: number;
-  name: string;
-  number_of_extras: number;
-};
+export type CalendarMap = { [date: string]: CalendarEntry };
 
 export async function storeRosterData(calendarData: CalendarMap) {
   const { error } = await supabase
@@ -77,41 +64,13 @@ export async function getRosterData(): Promise<CalendarMap> {
   return calendarMap;
 }
 
-// Function to get extras personnel data
-export async function getExtrasData(): Promise<ExtrasPersonnel[]> {
-  const { data, error } = await supabase
+export async function storeExtrasPersonnelData(extras: { batch: string, name: string, number: number }[]) {
+  const { error } = await supabase
     .from('extras_personnel')
-    .select('*')
-    .order('id');
+    .upsert(extras);
 
   if (error) {
-    console.error('Error fetching extras data:', error);
+    console.error('Error storing extras personnel data:', error);
     throw error;
-  }
-
-  return data || [];
-}
-
-// Function to store extras personnel data
-export async function storeExtrasData(extras: ExtrasPersonnel[]): Promise<void> {
-  // First, clear existing data
-  const { error: deleteError } = await supabase
-    .from('extras_personnel')
-    .delete()
-    .neq('id', 0); // Delete all records
-
-  if (deleteError) {
-    console.error('Error clearing extras data:', deleteError);
-    throw deleteError;
-  }
-
-  // Then insert new data
-  const { error: insertError } = await supabase
-    .from('extras_personnel')
-    .insert(extras);
-
-  if (insertError) {
-    console.error('Error storing extras data:', insertError);
-    throw insertError;
   }
 } 

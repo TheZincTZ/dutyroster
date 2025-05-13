@@ -1,24 +1,71 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, storeExtrasData, CalendarMap, ExtrasPersonnel } from "../lib/supabase";
-import * as XLSX from "xlsx";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData } from "../lib/supabase";
 
+const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
 
+function getMay2025CalendarData(matrix: string[][]): CalendarMap {
+  const calendar: CalendarMap = {};
+  for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
+    const weekStart = DATE_ROW_INDEXES[w];
+    const dateRow = matrix[weekStart];
+    const amRow = matrix[weekStart + 1];
+    const pmRow = matrix[weekStart + 2];
+    const reserveAmRow = matrix[weekStart + 3];
+    const reservePmRow = matrix[weekStart + 4];
+
+    // For the first week, use columns 3-8 (D-I); for others, use 1-8 (B-I)
+    const colStart = w === 0 ? 3 : 1;
+    const colEnd = 8; // inclusive, column I
+
+    for (let col = colStart; col <= colEnd; col++) {
+      const dateCell = dateRow[col];
+      if (!dateCell) continue;
+      const match = String(dateCell).match(/\d+/);
+      if (!match) continue;
+      const dateNum = parseInt(match[0], 10);
+      if (isNaN(dateNum)) continue;
+      calendar[dateNum] = {
+        AM: amRow[col] || '',
+        PM: pmRow[col] || '',
+        ReserveAM: reserveAmRow[col] || '',
+        ReservePM: reservePmRow[col] || '',
+      };
+    }
+  }
+  return calendar;
+}
+
 export default function AdminUpload() {
+  const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [pinAttempts, setPinAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [message, setMessage] = useState("");
 
-  // Check lock state on mount
+  // Load from Edge Config on mount
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const calendarData = await getRosterData();
+        if (Object.keys(calendarData).length > 0) {
+          setCalendar(calendarData);
+        }
+      } catch (err) {
+        console.error('Error loading data:', err);
+      }
+    };
+    
+    loadData();
+    
+    // Check lock state
     const lockState = localStorage.getItem(PIN_LOCK_KEY);
     if (lockState === "locked") {
       setLocked(true);
@@ -49,69 +96,59 @@ export default function AdminUpload() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setLoading(true);
-    setMessage("Processing file...");
-
+    setError(null);
+    const formData = new FormData();
+    formData.append("file", file);
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Failed to upload file");
+      const result = await response.json();
+      const newCalendar = getMay2025CalendarData(result.data);
+      setCalendar(newCalendar);
+      
+      // Store the calendar data in Edge Config
+      await storeRosterData(newCalendar);
 
-      // Extract duty roster data
-      const calendarData: CalendarMap = {};
-      for (let row = 2; row <= 32; row++) {
-        const dateCell = worksheet[`A${row}`]?.v;
-        if (dateCell) {
-          // Extract numeric date from the cell value
-          const dateMatch = String(dateCell).match(/\d+/);
-          if (dateMatch) {
-            const dateNum = parseInt(dateMatch[0], 10);
-            if (!isNaN(dateNum)) {
-              calendarData[dateNum] = {
-                AM: worksheet[`B${row}`]?.v?.toString() || "",
-                PM: worksheet[`C${row}`]?.v?.toString() || "",
-                ReserveAM: worksheet[`D${row}`]?.v?.toString() || "",
-                ReservePM: worksheet[`E${row}`]?.v?.toString() || "",
-              };
-            }
-          }
-        }
+      // Store extras personnel data
+      // Try to get the batch from cell G25 (row 25, col 6, index 24,5)
+      let batch = 'unknown';
+      if (result.data && result.data[24] && result.data[24][6]) {
+        batch = String(result.data[24][6]).trim();
       }
-
-      // Extract extras personnel data
-      const extrasData: ExtrasPersonnel[] = [];
-      for (let row = 28; row <= 34; row++) {
-        const name = worksheet[`F${row}`]?.v;
-        const numberOfExtras = worksheet[`G${row}`]?.v;
-        
-        if (name && numberOfExtras !== undefined && numberOfExtras !== null) {
-          // Convert numberOfExtras to a number, defaulting to 0 if invalid
-          const extrasNum = Number(numberOfExtras);
-          if (!isNaN(extrasNum)) {
-            extrasData.push({
-              id: row - 27, // Generate sequential IDs starting from 1
-              name: name.toString().trim(),
-              number_of_extras: extrasNum
-            });
-          }
-        }
+      if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
+        await storeExtrasPersonnelData(result.extrasPersonnel.map((p: any) => ({
+          batch,
+          name: p.name,
+          number: p.number
+        })));
       }
-
-      // Upload both duty roster and extras data
-      await Promise.all([
-        storeRosterData(calendarData),
-        storeExtrasData(extrasData)
-      ]);
-
-      setMessage("Data uploaded successfully!");
-    } catch (error) {
-      console.error("Error processing file:", error);
-      setMessage("Error uploading data. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   };
+
+  // Build May 2025 calendar grid
+  const daysInMonth = 31;
+  const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
+  const weeks: number[][] = [];
+  let week: number[] = Array(firstDayOfWeek).fill(0);
+  for (let d = 1; d <= daysInMonth; d++) {
+    week.push(d);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  }
+  if (week.length) {
+    while (week.length < 7) week.push(0);
+    weeks.push(week);
+  }
 
   if (locked) {
     return (
@@ -159,38 +196,74 @@ export default function AdminUpload() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-green-800 mb-8">Admin Upload</h1>
-        
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="mb-4">
-            <label className="block text-green-700 mb-2">
-              Upload Excel File
-            </label>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileUpload}
-              disabled={loading}
-              className="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-          </div>
-
-          {loading && (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto mb-2"></div>
-              <p className="text-green-700">Uploading...</p>
-            </div>
-          )}
-
-          {message && (
-            <div className={`mt-4 p-4 rounded-lg ${
-              message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-            }`}>
-              {message}
-            </div>
-          )}
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
+        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
+          <label className="block text-sm font-medium text-green-700 mb-2">
+            Upload Duty Roster File
+          </label>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileUpload}
+            className="block w-full text-sm text-green-700
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-green-50 file:text-green-700
+              hover:file:bg-green-100"
+          />
         </div>
+        {loading && (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-8">
+            {error}
+          </div>
+        )}
+        {Object.keys(calendar).length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-green-300">
+              <thead>
+                <tr>
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                    <th key={idx} className="px-2 py-2 border bg-green-100 text-xs font-semibold text-green-700">
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map((week, wIdx) => (
+                  <tr key={wIdx}>
+                    {week.map((date, dIdx) => (
+                      <td key={dIdx} className="align-top px-2 py-2 border min-w-[120px]">
+                        {date > 0 ? (
+                          <div>
+                            <div className="font-bold text-green-700 mb-1">{date}</div>
+                            {calendar[date] && (
+                              <div>
+                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
+                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-green-200 text-center">—</div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </main>
   );

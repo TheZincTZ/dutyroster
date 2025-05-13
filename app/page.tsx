@@ -76,20 +76,12 @@ export default function Home() {
       <div className="max-w-lg w-full bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-green-800">Duty Roster</h1>
-          <div className="flex gap-4">
-            <Link 
-              href="/search" 
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Search Personnel
-            </Link>
-            <Link 
-              href="/extras" 
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Extras Personnel
-            </Link>
-          </div>
+          <Link 
+            href="/search" 
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Search Personnel
+          </Link>
         </div>
         <div className="mb-2 text-center text-green-700 text-xl font-semibold">
           {now.toLocaleString("en-US", { month: "long" })} {now.getDate()}, {now.getFullYear()}
