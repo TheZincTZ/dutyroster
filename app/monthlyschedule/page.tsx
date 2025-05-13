@@ -57,44 +57,83 @@ export default function MonthlySchedule() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setData(parsed.data || []);
-        setCalendar(parsed.calendar || {});
-      } catch {}
-    }
+    let isMounted = true;
+    
+    const loadStoredData = () => {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored && isMounted) {
+        try {
+          const parsed = JSON.parse(stored);
+          setData(parsed.data || []);
+          setCalendar(parsed.calendar || {});
+        } catch (err) {
+          console.error('Error parsing stored data:', err);
+        }
+      }
+    };
+    
+    loadStoredData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Save to localStorage whenever data/calendar changes
   useEffect(() => {
-    if (Object.keys(calendar).length > 0) {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({ data, calendar })
-      );
-    }
+    let isMounted = true;
+    
+    const saveData = () => {
+      if (Object.keys(calendar).length > 0 && isMounted) {
+        try {
+          localStorage.setItem(
+            LOCAL_STORAGE_KEY,
+            JSON.stringify({ data, calendar })
+          );
+        } catch (err) {
+          console.error('Error saving to localStorage:', err);
+        }
+      }
+    };
+    
+    saveData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [data, calendar]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
     setLoading(true);
     setError(null);
+    
     const formData = new FormData();
     formData.append("file", file);
+    
     try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        signal,
       });
+      
       if (!response.ok) throw new Error("Failed to upload file");
+      
       const result = await response.json();
       setData(result.data);
       setCalendar(getMay2025CalendarData(result.data));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('Upload cancelled');
+      } else {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      }
     } finally {
       setLoading(false);
     }

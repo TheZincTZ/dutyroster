@@ -48,30 +48,50 @@ export default function Home() {
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
 
-  // Load data from Edge Config
+  // Load data from Supabase
   useEffect(() => {
+    let isMounted = true;
+    
     const loadData = async () => {
       try {
         const calendarData = await getRosterData();
-        setCalendar(calendarData);
+        if (isMounted) {
+          setCalendar(calendarData);
+        }
       } catch (err) {
         console.error('Error loading data:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
     loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Live clock and shift update
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newNow = new Date();
-      setNow(newNow);
-      setShiftInfo(getShiftInfo(newNow));
-    }, 1000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    
+    const updateTime = () => {
+      if (isMounted) {
+        const newNow = new Date();
+        setNow(newNow);
+        setShiftInfo(getShiftInfo(newNow));
+      }
+    };
+
+    const interval = setInterval(updateTime, 1000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const amEntry = calendar[shiftInfo.date]?.AM || "";
