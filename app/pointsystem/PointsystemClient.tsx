@@ -45,23 +45,23 @@ export default function PointsystemClient() {
       <div className="text-green-700 text-center py-4">No data for {unit} {shift}.</div>
     );
     return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-green-200 rounded-xl overflow-hidden mb-6 text-xs sm:text-sm md:text-base">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[500px] border border-green-200 rounded-xl overflow-hidden mb-6 text-xs sm:text-sm md:text-base">
           <thead>
             <tr className="bg-green-100">
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg">Name</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg">Points</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg">Months Valid</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg">Average Points</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg whitespace-nowrap">Name</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg whitespace-nowrap">Points</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg whitespace-nowrap">Months Valid</th>
+              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-xs sm:text-lg whitespace-nowrap">Average Points</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((p, idx) => (
               <tr key={p.id} className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}>
-                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-xs sm:text-lg">{p.name}</td>
-                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg">{p.points}</td>
-                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg">{p.months_valid}</td>
-                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg">{p.average_points}</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-xs sm:text-lg whitespace-nowrap">{p.name}</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg whitespace-nowrap">{p.points}</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg whitespace-nowrap">{p.months_valid}</td>
+                <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg whitespace-nowrap">{p.average_points}</td>
               </tr>
             ))}
           </tbody>
@@ -72,7 +72,7 @@ export default function PointsystemClient() {
 
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100 overflow-x-hidden">
         <div className="mb-6 sm:mb-8">
           <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-xl shadow-sm">
             <div className="flex items-start gap-3">
