@@ -198,7 +198,7 @@ export default function SearchClient() {
             {results.length > 0 ? (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h2 className="text-xl font-semibold text-green-800 mb-4">
-                  Found {results.length} dut{results.length === 1 ? 'y' : 'ies'} for "{selectedName}"
+                  Found {results.length} dut{results.length === 1 ? 'y' : 'ies'} for &quot;{selectedName}&quot;
                 </h2>
                 <div className="space-y-4">
                   {results.map((result, index) => (
@@ -223,7 +223,7 @@ export default function SearchClient() {
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-lg p-6 text-center text-green-700">
-                No duties found for "{selectedName}"
+                No duties found for &quot;{selectedName}&quot;
               </div>
             )}
           </div>
