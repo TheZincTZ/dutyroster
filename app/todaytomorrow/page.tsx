@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "../lib/supabase";
 import Link from "next/link";
+import Head from "next/head";
 
 function getDateKey(date: Date) {
   // Assumes May 2025, but can be adapted for other months
@@ -43,6 +44,9 @@ export default function TodayTomorrowPage() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
+      <Head>
+        <title>Current &amp; Upcoming Duty</title>
+      </Head>
       <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">

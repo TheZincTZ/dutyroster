@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
 import Link from 'next/link';
+import Head from "next/head";
 
 export default function Home() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -63,6 +64,9 @@ export default function Home() {
   if (loading) {
     return (
       <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
+        <Head>
+          <title>Homepage</title>
+        </Head>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
           <p className="text-green-700">Loading duty roster...</p>
@@ -73,6 +77,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
+      <Head>
+        <title>Homepage</title>
+      </Head>
       <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
