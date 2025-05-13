@@ -12,15 +12,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export interface CalendarEntry {
-  AM: string;
-  PM: string;
-  ReserveAM: string;
-  ReservePM: string;
-}
-
 export type CalendarMap = {
-  [date: string]: CalendarEntry;
+  [key: string]: {
+    AM: string;
+    PM: string;
+    ReserveAM: string;
+    ReservePM: string;
+  };
 };
 
 interface RosterRecord {
@@ -34,40 +32,38 @@ interface RosterRecord {
 
 export async function getRosterData(): Promise<CalendarMap> {
   try {
-    console.log('Fetching data from Supabase...');
     const { data, error } = await supabase
       .from('roster')
-      .select('*');
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase error:', error);
-      throw error;
-    }
-
-    console.log('Raw data from Supabase:', data);
-
-    if (!data || data.length === 0) {
-      console.log('No data found in Supabase');
+      console.error('Error fetching roster data:', error);
       return {};
     }
 
-    // Convert the array of records to a map
+    // Process the data to get the latest entry for each date
     const calendarMap: CalendarMap = {};
-    data.forEach((record: RosterRecord) => {
-      console.log('Processing record:', record);
-      calendarMap[record.date] = {
-        AM: record.am || '',
-        PM: record.pm || '',
-        ReserveAM: record.reserve_am || '',
-        ReservePM: record.reserve_pm || '',
-      };
+    const processedDates = new Set<string>();
+
+    data?.forEach((row) => {
+      const date = String(row.date);
+      // Only process each date once (taking the latest entry due to ordering)
+      if (!processedDates.has(date)) {
+        calendarMap[date] = {
+          AM: row.am || '',
+          PM: row.pm || '',
+          ReserveAM: row.reserve_am || '',
+          ReservePM: row.reserve_pm || ''
+        };
+        processedDates.add(date);
+      }
     });
 
-    console.log('Processed calendar map:', calendarMap);
     return calendarMap;
   } catch (error) {
     console.error('Error in getRosterData:', error);
-    throw error;
+    return {};
   }
 }
 
