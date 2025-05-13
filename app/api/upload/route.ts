@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
     // Extract extras personnel from columns F (5) and G (6), rows 28-34 (indices 27-33)
     const extrasPersonnel = [];
     for (let i = 27; i <= 33; i++) {
-      const row = jsonData[i];
+      const row = jsonData[i] as unknown[];
       if (!row) continue;
       const name = row[5] ? String(row[5]).trim() : '';
-      const number = row[6] ? parseInt(row[6], 10) : null;
+      const number = row[6] ? parseInt(row[6] as string, 10) : null;
       if (name) {
         extrasPersonnel.push({ name, number: number || 0 });
       }
