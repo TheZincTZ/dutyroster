@@ -53,7 +53,12 @@ export default function SearchClient() {
         // Extract all unique names from all fields
         const nameSet = new Set<string>();
         data?.forEach((row: RosterRow) => {
-          [row.AM ?? row.am, row.PM ?? row.pm, row.ReserveAM ?? row.reserve_am, row.ReservePM ?? row.reserve_pm].forEach((cell) => {
+          [
+            row.AM ?? row.am,
+            row.PM ?? row.pm,
+            row.ReserveAM ?? row.reserve_am,
+            row.ReservePM ?? row.reserve_pm
+          ].filter((cell): cell is string => typeof cell === 'string').forEach((cell) => {
             extractNames(cell).forEach((name) => nameSet.add(name));
           });
         });
