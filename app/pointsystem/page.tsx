@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Link from "next/link";
-import Head from "next/head";
 
 type PointSystem = {
   id: number;
@@ -71,9 +70,6 @@ export default function PointSystemPage() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <Head>
-        <title>Point System</title>
-      </Head>
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
         <div className="mb-8">
           <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-xl shadow-sm">
@@ -140,4 +136,8 @@ export default function PointSystemPage() {
       </div>
     </main>
   );
-} 
+}
+
+export const metadata = {
+  title: "Point System"
+}; 

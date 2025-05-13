@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { getRosterData, CalendarMap } from "../lib/supabase";
 import Link from 'next/link';
-import Head from "next/head";
 
 type DutyEntry = {
   date: number;
@@ -106,9 +105,6 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <Head>
-        <title>Search Page</title>
-      </Head>
       <div className="max-w-3xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
@@ -177,4 +173,8 @@ export default function SearchPage() {
       </div>
     </main>
   );
-} 
+}
+
+export const metadata = {
+  title: "Search Page"
+}; 

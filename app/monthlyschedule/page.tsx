@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "../lib/supabase";
 import Link from "next/link";
-import Head from "next/head";
 
 export default function MonthlySchedule() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -43,9 +42,6 @@ export default function MonthlySchedule() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <Head>
-        <title>Monthly Roster</title>
-      </Head>
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
@@ -105,3 +101,7 @@ export default function MonthlySchedule() {
     </main>
   );
 }
+
+export const metadata = {
+  title: "Monthly Roster"
+};
