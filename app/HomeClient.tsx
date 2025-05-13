@@ -87,7 +87,7 @@ export default function HomeClient() {
             href="/extras"
             className="px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition-colors font-semibold"
           >
-            View Extras History
+            View Extras Personnel
           </Link>
           <Link
             href="/monthlyschedule"
