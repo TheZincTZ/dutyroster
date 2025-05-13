@@ -137,7 +137,7 @@ export default function SearchPage() {
         {searchResults.length > 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-green-800 mb-4">
-              Found {searchResults.length} duties for "{searchQuery}"
+              Found {searchResults.length} duties for &ldquo;{searchQuery}&rdquo;
             </h2>
             <div className="space-y-4">
               {searchResults.map((result, index) => (
@@ -162,7 +162,7 @@ export default function SearchPage() {
           </div>
         ) : searchQuery ? (
           <div className="bg-white rounded-lg shadow-lg p-6 text-center text-green-700">
-            No duties found for "{searchQuery}"
+            No duties found for &ldquo;{searchQuery}&rdquo;
           </div>
         ) : null}
       </div>
