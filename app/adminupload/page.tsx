@@ -8,6 +8,8 @@ const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
 
+type ExtrasPersonnel = { name: string; number: number };
+
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
   for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
@@ -120,7 +122,7 @@ export default function AdminUpload() {
         batch = String(result.data[24][6]).trim();
       }
       if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData(result.extrasPersonnel.map((p: any) => ({
+        await storeExtrasPersonnelData((result.extrasPersonnel as ExtrasPersonnel[]).map((p) => ({
           batch,
           name: p.name,
           number: p.number
