@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData } from "../lib/supabase";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
@@ -121,6 +121,11 @@ export default function AdminUpload() {
           name: p.name,
           number: p.number
         })));
+      }
+
+      // Store point system data
+      if (result.pointSystems && result.pointSystems.length > 0) {
+        await storePointSystemsData(result.pointSystems);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

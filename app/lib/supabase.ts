@@ -73,4 +73,15 @@ export async function storeExtrasPersonnelData(extras: { name: string, number: n
     console.error('Error storing extras personnel data:', error);
     throw error;
   }
+}
+
+export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[]) {
+  const { error } = await supabase
+    .from('point_systems')
+    .upsert(points);
+
+  if (error) {
+    console.error('Error storing point systems data:', error);
+    throw error;
+  }
 } 

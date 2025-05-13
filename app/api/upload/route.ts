@@ -39,7 +39,59 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ data: jsonData, extrasPersonnel });
+    // Extract point system data
+    const pointSystems = [];
+    // Brigade Morning: J-M, 3-14 (indices 9-12, 2-13)
+    for (let i = 2; i <= 13; i++) {
+      const row = jsonData[i] as unknown[];
+      if (!row) continue;
+      const name = row[9] ? String(row[9]).trim() : '';
+      const points = row[10] ? Number(row[10]) : 0;
+      const months_valid = row[11] ? Number(row[11]) : 0;
+      const average_points = row[12] ? Number(row[12]) : 0;
+      if (name) {
+        pointSystems.push({ unit: 'brigade', shift: 'morning', name, points, months_valid, average_points });
+      }
+    }
+    // Brigade Night: J-M, 17-27 (indices 9-12, 16-26)
+    for (let i = 16; i <= 26; i++) {
+      const row = jsonData[i] as unknown[];
+      if (!row) continue;
+      const name = row[9] ? String(row[9]).trim() : '';
+      const points = row[10] ? Number(row[10]) : 0;
+      const months_valid = row[11] ? Number(row[11]) : 0;
+      const average_points = row[12] ? Number(row[12]) : 0;
+      if (name) {
+        pointSystems.push({ unit: 'brigade', shift: 'night', name, points, months_valid, average_points });
+      }
+    }
+    // SSP Morning: J-M, 30 (index 29)
+    {
+      const row = jsonData[29] as unknown[];
+      if (row) {
+        const name = row[9] ? String(row[9]).trim() : '';
+        const points = row[10] ? Number(row[10]) : 0;
+        const months_valid = row[11] ? Number(row[11]) : 0;
+        const average_points = row[12] ? Number(row[12]) : 0;
+        if (name) {
+          pointSystems.push({ unit: 'ssp', shift: 'morning', name, points, months_valid, average_points });
+        }
+      }
+    }
+    // SSP Night: J-M, 32-39 (indices 31-38)
+    for (let i = 31; i <= 38; i++) {
+      const row = jsonData[i] as unknown[];
+      if (!row) continue;
+      const name = row[9] ? String(row[9]).trim() : '';
+      const points = row[10] ? Number(row[10]) : 0;
+      const months_valid = row[11] ? Number(row[11]) : 0;
+      const average_points = row[12] ? Number(row[12]) : 0;
+      if (name) {
+        pointSystems.push({ unit: 'ssp', shift: 'night', name, points, months_valid, average_points });
+      }
+    }
+
+    return NextResponse.json({ data: jsonData, extrasPersonnel, pointSystems });
   } catch (error) {
     console.error('Error processing file:', error);
     return NextResponse.json(
