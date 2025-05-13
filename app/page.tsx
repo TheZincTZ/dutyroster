@@ -51,20 +51,28 @@ export default function Home() {
   const [now, setNow] = useState(new Date());
   const [shiftInfo, setShiftInfo] = useState(getShiftInfo(new Date()));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize database and load data
   useEffect(() => {
     const initializeAndLoadData = async () => {
       try {
         console.log('Initializing database...');
-        await initDatabase();
+        const dbInitialized = await initDatabase();
         
+        if (!dbInitialized) {
+          setError('Database not initialized. Please contact the administrator.');
+          setLoading(false);
+          return;
+        }
+
         console.log('Loading data...');
         const calendarData = await getRosterData();
         console.log('Loaded calendar data:', calendarData);
         setCalendar(calendarData);
       } catch (err) {
         console.error('Error loading data:', err);
+        setError('Failed to load roster data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -108,6 +116,17 @@ export default function Home() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
           <p className="text-green-700">Loading duty roster...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">{error}</div>
+          <p className="text-green-700">Please try again later or contact the administrator.</p>
         </div>
       </main>
     );
