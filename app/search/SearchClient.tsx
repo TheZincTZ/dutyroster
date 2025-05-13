@@ -31,17 +31,25 @@ export default function SearchClient() {
       if (rosterError) throw rosterError;
 
       const duties: Duty[] = [];
+      const search = searchTerm.trim().toLowerCase();
       rosterData?.forEach((day) => {
-        if (day.AM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        // Helper to check if the search term matches any name in the cell
+        const matches = (cell: string) =>
+          cell
+            ?.split(',')
+            .map((n: string) => n.trim().toLowerCase())
+            .includes(search);
+
+        if (matches(day.AM)) {
           duties.push({ date: day.date, shift: "AM", type: "Primary" });
         }
-        if (day.PM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        if (matches(day.PM)) {
           duties.push({ date: day.date, shift: "PM", type: "Primary" });
         }
-        if (day.ReserveAM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        if (matches(day.ReserveAM)) {
           duties.push({ date: day.date, shift: "AM", type: "Reserve" });
         }
-        if (day.ReservePM?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        if (matches(day.ReservePM)) {
           duties.push({ date: day.date, shift: "PM", type: "Reserve" });
         }
       });
