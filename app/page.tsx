@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/supabase";
+import Link from 'next/link';
 
 export default function Home() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -73,7 +74,15 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8 bg-green-50 flex items-center justify-center">
       <div className="max-w-lg w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-6 text-green-800 text-center">Duty Roster</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-green-800">Duty Roster</h1>
+          <Link 
+            href="/search" 
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Search Personnel
+          </Link>
+        </div>
         <div className="mb-2 text-center text-green-700 text-xl font-semibold">
           {now.toLocaleString("en-US", { month: "long" })} {now.getDate()}, {now.getFullYear()}
         </div>
