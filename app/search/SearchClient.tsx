@@ -195,38 +195,35 @@ export default function SearchClient() {
                   : `No duties found for "${selectedName}"`}
               </span>
             </div>
-            {results.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full border border-green-200 rounded-xl overflow-hidden">
-                  <thead>
-                    <tr className="bg-green-100">
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Date</th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Shift</th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-green-700 font-semibold text-base sm:text-lg">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.map((duty, idx) => (
-                      <tr 
-                        key={`${duty.date}-${duty.shift}-${duty.type}`}
-                        className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}
-                      >
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-base sm:text-lg">
-                          {new Date(2024, 0, duty.date).toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric"
-                          })}
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
-                          {duty.shift}
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-800 text-base sm:text-lg">
-                          {duty.type}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {results.length > 0 ? (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-green-800 mb-4">
+                  Found {results.length} dut{results.length === 1 ? 'y' : 'ies'} for "{selectedName}"
+                </h2>
+                <div className="space-y-4">
+                  {results.map((result, index) => (
+                    <div 
+                      key={index}
+                      className="p-4 border border-green-200 rounded-lg bg-green-50"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-green-700">{new Date(2024, 0, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
+                          <span className="ml-2 text-green-800">
+                            {result.shift} Shift ({result.type})
+                          </span>
+                        </div>
+                        <div className="text-sm text-green-600">
+                          {result.shift === "AM" ? "7:30am - 7:30pm" : "7:30pm - 7:30am"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-lg p-6 text-center text-green-700">
+                No duties found for "{selectedName}"
               </div>
             )}
           </div>
