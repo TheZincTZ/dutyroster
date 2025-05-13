@@ -104,6 +104,12 @@ export default function Home() {
             >
               View Today & Tomorrow Duty
             </Link>
+            <Link
+              href="/pointsystem"
+              className="px-4 py-2 bg-green-950 text-white rounded-lg shadow hover:bg-green-900 transition-colors font-semibold"
+            >
+              View Point System
+            </Link>
           </div>
         </div>
         <div className="mb-2 text-center text-green-700 text-2xl font-bold tracking-wide">
