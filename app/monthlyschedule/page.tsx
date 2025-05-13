@@ -14,7 +14,7 @@ export default function MonthlySchedule() {
       try {
         const calendarData = await getRosterData();
         setCalendar(calendarData);
-      } catch (err) {
+      } catch {
         setError("Failed to load duty roster");
       } finally {
         setLoading(false);
