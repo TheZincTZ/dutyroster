@@ -69,7 +69,7 @@ export default function ExtrasPage() {
                     <span className="font-semibold text-green-700">{person.name}</span>
                   </div>
                   <div className="text-sm text-green-600">
-                    {person.contact}
+                    Number of Extras: {person.number_of_extras}
                   </div>
                 </div>
               </div>

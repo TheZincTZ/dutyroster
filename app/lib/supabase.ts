@@ -31,7 +31,7 @@ export type CalendarMap = {
 export type ExtrasPersonnel = {
   id: number;
   name: string;
-  contact: string;
+  number_of_extras: number;
 };
 
 export async function storeRosterData(calendarData: CalendarMap) {
