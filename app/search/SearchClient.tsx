@@ -74,23 +74,31 @@ export default function SearchClient() {
   // When a name is selected, find all duties for that name
   useEffect(() => {
     if (!selectedName) return;
+    // Debug log
+    console.log('Selected name:', selectedName);
+    console.log('Roster data:', rosterData);
     const duties: Duty[] = [];
     rosterData.forEach((day) => {
+      // Support both uppercase and lowercase field names
+      const am = day.AM ?? day.am ?? '';
+      const pm = day.PM ?? day.pm ?? '';
+      const reserveAM = day.ReserveAM ?? day.reserve_am ?? '';
+      const reservePM = day.ReservePM ?? day.reserve_pm ?? '';
       const check = (cell: string) =>
         cell
-          ?.split(",")
-          .map((n: string) => n.trim())
-          .includes(selectedName);
-      if (check(day.AM)) {
+          ?.split(',')
+          .map((n: string) => n.trim().toLowerCase())
+          .includes(selectedName.trim().toLowerCase());
+      if (check(am)) {
         duties.push({ date: day.date, shift: "AM", type: "Primary" });
       }
-      if (check(day.PM)) {
+      if (check(pm)) {
         duties.push({ date: day.date, shift: "PM", type: "Primary" });
       }
-      if (check(day.ReserveAM)) {
+      if (check(reserveAM)) {
         duties.push({ date: day.date, shift: "AM", type: "Reserve" });
       }
-      if (check(day.ReservePM)) {
+      if (check(reservePM)) {
         duties.push({ date: day.date, shift: "PM", type: "Reserve" });
       }
     });
