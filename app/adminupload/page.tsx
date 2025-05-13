@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap } from "../lib/supabase";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasData, ExtrasPersonnel } from "../lib/supabase";
+import * as XLSX from "xlsx";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
@@ -49,6 +50,7 @@ export default function AdminUpload() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [message, setMessage] = useState("");
 
   // Load from Edge Config on mount
   useEffect(() => {
@@ -96,24 +98,54 @@ export default function AdminUpload() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
     setLoading(true);
-    setError(null);
-    const formData = new FormData();
-    formData.append("file", file);
+    setMessage("Processing file...");
+
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Failed to upload file");
-      const result = await response.json();
-      const newCalendar = getMay2025CalendarData(result.data);
-      setCalendar(newCalendar);
-      
-      // Store the calendar data in Edge Config
-      await storeRosterData(newCalendar);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // Extract duty roster data (existing code)
+      const calendarData: CalendarMap = {};
+      for (let row = 3; row <= 27; row++) {
+        const date = worksheet[`A${row}`]?.v;
+        if (date) {
+          calendarData[date] = {
+            AM: worksheet[`B${row}`]?.v || "",
+            PM: worksheet[`C${row}`]?.v || "",
+            ReserveAM: worksheet[`D${row}`]?.v || "",
+            ReservePM: worksheet[`E${row}`]?.v || "",
+          };
+        }
+      }
+
+      // Extract extras personnel data
+      const extrasData: ExtrasPersonnel[] = [];
+      for (let row = 28; row <= 34; row++) {
+        const name = worksheet[`F${row}`]?.v;
+        const numberOfExtras = worksheet[`G${row}`]?.v;
+        
+        if (name && numberOfExtras !== undefined) {
+          extrasData.push({
+            id: row - 27, // Generate sequential IDs starting from 1
+            name: name.toString(),
+            number_of_extras: Number(numberOfExtras)
+          });
+        }
+      }
+
+      // Upload both duty roster and extras data
+      await Promise.all([
+        storeRosterData(calendarData),
+        storeExtrasData(extrasData)
+      ]);
+
+      setMessage("Data uploaded successfully!");
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setMessage("Error uploading data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -182,74 +214,38 @@ export default function AdminUpload() {
 
   return (
     <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
-          <label className="block text-sm font-medium text-green-700 mb-2">
-            Upload Duty Roster File
-          </label>
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileUpload}
-            className="block w-full text-sm text-green-700
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-green-50 file:text-green-700
-              hover:file:bg-green-100"
-          />
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-green-800 mb-8">Admin Upload</h1>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="mb-4">
+            <label className="block text-green-700 mb-2">
+              Upload Excel File
+            </label>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              disabled={loading}
+              className="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+          </div>
+
+          {loading && (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
+              <p className="text-green-700">Uploading data...</p>
+            </div>
+          )}
+
+          {message && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+            }`}>
+              {message}
+            </div>
+          )}
         </div>
-        {loading && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-8">
-            {error}
-          </div>
-        )}
-        {Object.keys(calendar).length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-green-300">
-              <thead>
-                <tr>
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                    <th key={idx} className="px-2 py-2 border bg-green-100 text-xs font-semibold text-green-700">
-                      {day}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((week, wIdx) => (
-                  <tr key={wIdx}>
-                    {week.map((date, dIdx) => (
-                      <td key={dIdx} className="align-top px-2 py-2 border min-w-[120px]">
-                        {date > 0 ? (
-                          <div>
-                            <div className="font-bold text-green-700 mb-1">{date}</div>
-                            {calendar[date] && (
-                              <div>
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-green-200 text-center">—</div>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </main>
   );
