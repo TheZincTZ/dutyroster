@@ -1,143 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
-
-type CalendarEntry = {
-  AM: string;
-  PM: string;
-  ReserveAM: string;
-  ReservePM: string;
-};
-
-type CalendarMap = { [date: string]: CalendarEntry };
-
-function getMay2025CalendarData(matrix: string[][]): CalendarMap {
-  const calendar: CalendarMap = {};
-  for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
-    const weekStart = DATE_ROW_INDEXES[w];
-    const dateRow = matrix[weekStart];
-    const amRow = matrix[weekStart + 1];
-    const pmRow = matrix[weekStart + 2];
-    const reserveAmRow = matrix[weekStart + 3];
-    const reservePmRow = matrix[weekStart + 4];
-
-    // For the first week, use columns 3-8 (D-I); for others, use 1-8 (B-I)
-    const colStart = w === 0 ? 3 : 1;
-    const colEnd = 8; // inclusive, column I
-
-    for (let col = colStart; col <= colEnd; col++) {
-      const dateCell = dateRow[col];
-      if (!dateCell) continue;
-      const match = String(dateCell).match(/\d+/);
-      if (!match) continue;
-      const dateNum = parseInt(match[0], 10);
-      if (isNaN(dateNum)) continue;
-      // Use "5-dateNum" format for May dates
-      const dateKey = `5-${dateNum}`;
-      calendar[dateKey] = {
-        AM: amRow[col] || '',
-        PM: pmRow[col] || '',
-        ReserveAM: reserveAmRow[col] || '',
-        ReservePM: reservePmRow[col] || '',
-      };
-    }
-  }
-  return calendar;
-}
-
-const LOCAL_STORAGE_KEY = "may2025DutyRosterData";
+import { useEffect, useState } from "react";
+import { getRosterData, CalendarMap } from "../lib/supabase";
+import Link from "next/link";
 
 export default function MonthlySchedule() {
-  const [data, setData] = useState<string[][]>([]);
   const [calendar, setCalendar] = useState<CalendarMap>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from localStorage on mount
   useEffect(() => {
-    let isMounted = true;
-    
-    const loadStoredData = () => {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored && isMounted) {
-        try {
-          const parsed = JSON.parse(stored);
-          setData(parsed.data || []);
-          setCalendar(parsed.calendar || {});
-        } catch (err) {
-          console.error('Error parsing stored data:', err);
-        }
+    const loadData = async () => {
+      try {
+        const calendarData = await getRosterData();
+        setCalendar(calendarData);
+      } catch (err) {
+        setError("Failed to load duty roster");
+      } finally {
+        setLoading(false);
       }
     };
-    
-    loadStoredData();
-    
-    return () => {
-      isMounted = false;
-    };
+    loadData();
   }, []);
-
-  // Save to localStorage whenever data/calendar changes
-  useEffect(() => {
-    let isMounted = true;
-    
-    const saveData = () => {
-      if (Object.keys(calendar).length > 0 && isMounted) {
-        try {
-          localStorage.setItem(
-            LOCAL_STORAGE_KEY,
-            JSON.stringify({ data, calendar })
-          );
-        } catch (err) {
-          console.error('Error saving to localStorage:', err);
-        }
-      }
-    };
-    
-    saveData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [data, calendar]);
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    try {
-      const controller = new AbortController();
-      const signal = controller.signal;
-      
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        signal,
-      });
-      
-      if (!response.ok) throw new Error("Failed to upload file");
-      
-      const result = await response.json();
-      setData(result.data);
-      setCalendar(getMay2025CalendarData(result.data));
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        console.log('Upload cancelled');
-      } else {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Build May 2025 calendar grid
   const daysInMonth = 31;
@@ -159,34 +43,15 @@ export default function MonthlySchedule() {
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">May 2025 Duty Roster</h1>
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
-          <label className="block text-sm font-medium text-green-700 mb-2">
-            Upload Duty Roster File
-          </label>
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileUpload}
-            className="block w-full text-sm text-green-700
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-green-50 file:text-green-700
-              hover:file:bg-green-100"
-          />
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-green-800">May 2025 Duty Roster</h1>
+          <Link href="/" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Back to Roster</Link>
         </div>
-        {loading && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-8">
-            {error}
-          </div>
-        )}
-        {Object.keys(calendar).length > 0 && (
+        {loading ? (
+          <div className="text-center text-green-700">Loading...</div>
+        ) : error ? (
+          <div className="text-center text-red-600">{error}</div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-green-300">
               <thead>
@@ -206,12 +71,12 @@ export default function MonthlySchedule() {
                         {date > 0 ? (
                           <div>
                             <div className="font-bold text-green-700 mb-1">{date}</div>
-                            {calendar[`5-${date}`] && (
+                            {calendar[date] && (
                               <div>
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[`5-${date}`]?.AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[`5-${date}`]?.PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[`5-${date}`]?.ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[`5-${date}`]?.ReservePM}</span></div>
+                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
+                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
                               </div>
                             )}
                           </div>
