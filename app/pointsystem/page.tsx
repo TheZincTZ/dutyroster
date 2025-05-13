@@ -71,6 +71,22 @@ export default function PointSystemPage() {
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-10 border border-green-100">
+        <div className="mb-8">
+          <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-xl shadow-sm">
+            <div className="flex items-start gap-3">
+              <span className="text-green-700 text-2xl mt-1">ℹ️</span>
+              <div className="text-green-900 text-base">
+                <div className="font-bold mb-1">How the Point System Works:</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><span className="font-semibold">Friday PM shift, Weekend, and Public Holidays:</span> <span className="text-green-800">2 points per duty</span></li>
+                  <li><span className="font-semibold">Weekday:</span> <span className="text-green-800">1 point per duty</span></li>
+                  <li><span className="font-semibold">Last Minute Notice of Swaps (24 hours):</span> <span className="text-red-700">Extra +1 Point Deduction</span></li>
+                  <li><span className="font-semibold">Late Reporting for Duty:</span> <span className="text-red-700">Extra +1 Point Deduction</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
             <span className="inline-block w-2 h-8 bg-green-600 rounded-full mr-2"></span>
