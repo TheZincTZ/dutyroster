@@ -51,6 +51,10 @@ export default function AdminUploadClient() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  // Unlock password state (must be at top level)
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
   // Load from Edge Config on mount
   useEffect(() => {
@@ -152,9 +156,6 @@ export default function AdminUploadClient() {
   }
 
   if (locked) {
-    const [unlockPassword, setUnlockPassword] = useState("");
-    const [unlockError, setUnlockError] = useState<string | null>(null);
-    const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
     return (
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
