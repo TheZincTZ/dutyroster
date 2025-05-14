@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap } from "../lib/supabase";
+import { getRosterData } from "../lib/supabase";
+import { CalendarMap } from "../lib/types";
 import Link from "next/link";
 
 export default function MonthlyscheduleClient() {

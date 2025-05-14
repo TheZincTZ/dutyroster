@@ -5,43 +5,6 @@ import { headers } from 'next/headers';
 import { RosterData, ExtrasPersonnel, PointSystem } from '../../lib/types';
 import { isRateLimited } from '../../lib/security';
 
-// Rate limiting
-const RATE_LIMIT = 10; // requests per minute
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute in milliseconds
-const ipRequests = new Map<string, { count: number; timestamp: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const requestData = ipRequests.get(ip);
-
-  if (!requestData) {
-    ipRequests.set(ip, { count: 1, timestamp: now });
-    return false;
-  }
-
-  if (now - requestData.timestamp > RATE_LIMIT_WINDOW) {
-    ipRequests.set(ip, { count: 1, timestamp: now });
-    return false;
-  }
-
-  if (requestData.count >= RATE_LIMIT) {
-    return true;
-  }
-
-  requestData.count++;
-  return false;
-}
-
-// Clean up old rate limit entries
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of ipRequests.entries()) {
-    if (now - data.timestamp > RATE_LIMIT_WINDOW) {
-      ipRequests.delete(ip);
-    }
-  }
-}, RATE_LIMIT_WINDOW);
-
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
