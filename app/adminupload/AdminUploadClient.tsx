@@ -87,7 +87,7 @@ export default function AdminUploadClient() {
     }
   }, [pinAttempts]);
 
-  const handlePinSubmit = (e: React.FormEvent) => {
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
     
@@ -97,9 +97,10 @@ export default function AdminUploadClient() {
     }
 
     if (pin === ADMIN_PIN) {
+      // Call the API route to set the cookie server-side
+      await fetch('/api/admin-login', { method: 'POST' });
       setAuthenticated(true);
       setPinError(null);
-      setAuthenticatedSession();
     } else {
       setPinError("Incorrect PIN");
       setPinAttempts((a) => a + 1);

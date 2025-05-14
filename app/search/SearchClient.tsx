@@ -90,9 +90,6 @@ export default function SearchClient() {
   // When a name is selected, find all duties for that name
   useEffect(() => {
     if (!selectedName) return;
-    // Debug log
-    console.log('Selected name:', selectedName);
-    console.log('Roster data:', rosterData);
     const duties: Duty[] = [];
     const searchName = selectedName.trim().toLowerCase();
     rosterData.forEach((day) => {
