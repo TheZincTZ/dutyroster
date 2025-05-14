@@ -149,23 +149,32 @@ export async function POST(req: NextRequest) {
     }
 
     // Process and validate data before insertion
-    const validData = jsonData.filter((row: unknown): row is RosterData => {
-      return (
-        typeof row === 'object' &&
-        row !== null &&
-        'Date' in row &&
-        'AM' in row &&
-        'PM' in row &&
-        'ReserveAM' in row &&
-        'ReservePM' in row
-      );
-    }).map((row: any) => ({
-      date: row.Date,
-      am: row.AM,
-      pm: row.PM,
-      reserve_am: row.ReserveAM,
-      reserve_pm: row.ReservePM
-    }));
+    type RawRosterRow = {
+      Date: number;
+      AM: string;
+      PM: string;
+      ReserveAM: string;
+      ReservePM: string;
+    };
+    const validData = jsonData
+      .filter((row: unknown): row is RawRosterRow => {
+        return (
+          typeof row === 'object' &&
+          row !== null &&
+          'Date' in row &&
+          'AM' in row &&
+          'PM' in row &&
+          'ReserveAM' in row &&
+          'ReservePM' in row
+        );
+      })
+      .map((row) => ({
+        date: row.Date,
+        am: row.AM,
+        pm: row.PM,
+        reserve_am: row.ReserveAM,
+        reserve_pm: row.ReservePM
+      }));
 
     if (validData.length === 0) {
       return NextResponse.json(
