@@ -226,7 +226,7 @@ export default function SearchClient() {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="font-semibold text-green-700">{new Date(2025, 4, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
+                          <span className="font-semibold text-green-700">{new Date(2024, 0, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
                           <span className="ml-2 text-green-800">
                             {result.shift} Shift ({result.type})
                           </span>
