@@ -99,8 +99,8 @@ export default function AdminUploadClient() {
     if (pin === ADMIN_PIN) {
       // Call the API route to set the cookie server-side
       await fetch('/api/admin-login', { method: 'POST' });
-      setAuthenticated(true);
-      setPinError(null);
+      window.location.reload(); // Ensure cookie is sent and middleware can see it
+      return;
     } else {
       setPinError("Incorrect PIN");
       setPinAttempts((a) => a + 1);

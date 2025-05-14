@@ -7,8 +7,8 @@ export async function POST() {
     httpOnly: true,
     path: '/',
     maxAge: 60 * 60, // 1 hour
-    sameSite: 'strict',
-    secure: true,
+    sameSite: 'lax', // more compatible for dev
+    secure: process.env.NODE_ENV === 'production', // only secure in production
   });
   return response;
 } 
