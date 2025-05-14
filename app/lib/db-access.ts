@@ -12,7 +12,14 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
 // 2. readOnlyClient - has read-only access (used in all other pages)
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  {
+    global: {
+      headers: {
+        'x-admin-pin': '7954'
+      }
+    }
+  }
 );
 
 const readOnlyClient = createClient(
