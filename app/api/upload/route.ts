@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { createClient } from "@supabase/supabase-js";
 import { headers } from 'next/headers';
 import { RosterData, ExtrasPersonnel, PointSystem } from '../../lib/types';
+import { isRateLimited } from '../../lib/security';
 
 // Rate limiting
 const RATE_LIMIT = 10; // requests per minute
@@ -41,10 +42,15 @@ setInterval(() => {
   }
 }, RATE_LIMIT_WINDOW);
 
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export async function POST(req: NextRequest) {
   try {
     // Get client IP
-    const headersList = headers();
+    const headersList = await headers();
     const forwardedFor = headersList.get('x-forwarded-for');
     const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown';
 
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest) {
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429, headers: { 'Content-Type': 'application/json' } }
+        { status: 429 }
       );
     }
 
@@ -178,24 +184,6 @@ export async function POST(req: NextRequest) {
         pointSystems.push({ unit: 'ssp', shift: 'night', name, points, months_valid, average_points });
       }
     }
-
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
 
     // Process and validate data before insertion
     const validData = jsonData.filter((row: unknown): row is RosterData => {
