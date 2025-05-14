@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from "@supabase/supabase-js";
 import { headers } from 'next/headers';
-import { RosterData, ExtrasPersonnel, PointSystem } from '../../lib/types';
+import { ExtrasPersonnel, PointSystem } from '../../lib/types';
 import { isRateLimited } from '../../lib/security';
+
+export const runtime = "nodejs";
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
