@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData } from "./lib/supabase";
-import { CalendarMap } from "./lib/types";
+import { getRosterData, CalendarMap } from "./lib/supabase";
 import Link from 'next/link';
 
 export default function HomeClient() {

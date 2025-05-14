@@ -12,14 +12,14 @@ type Duty = {
 
 interface RosterRow {
   date: number;
-  am?: string;
-  pm?: string;
-  reserve_am?: string;
-  reserve_pm?: string;
   AM?: string;
   PM?: string;
   ReserveAM?: string;
   ReservePM?: string;
+  am?: string;
+  pm?: string;
+  reserve_am?: string;
+  reserve_pm?: string;
 }
 
 export default function SearchClient() {
@@ -90,6 +90,9 @@ export default function SearchClient() {
   // When a name is selected, find all duties for that name
   useEffect(() => {
     if (!selectedName) return;
+    // Debug log
+    console.log('Selected name:', selectedName);
+    console.log('Roster data:', rosterData);
     const duties: Duty[] = [];
     const searchName = selectedName.trim().toLowerCase();
     rosterData.forEach((day) => {
@@ -226,7 +229,7 @@ export default function SearchClient() {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="font-semibold text-green-700">{new Date(2024, 0, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
+                          <span className="font-semibold text-green-700">{new Date(2025, 4, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
                           <span className="ml-2 text-green-800">
                             {result.shift} Shift ({result.type})
                           </span>

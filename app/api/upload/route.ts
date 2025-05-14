@@ -1,74 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { createClient } from "@supabase/supabase-js";
-import { headers } from 'next/headers';
-import { ExtrasPersonnel, PointSystem } from '../../lib/types';
-import { isRateLimited } from '../../lib/security';
-
-export const runtime = "nodejs";
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: NextRequest) {
   try {
-    // Get client IP
-    const headersList = await headers();
-    const forwardedFor = headersList.get('x-forwarded-for');
-    const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown';
-
-    // Check rate limit
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    // Validate request headers
-    const contentType = headersList.get('content-type');
-    if (!contentType?.includes('multipart/form-data')) {
-      return NextResponse.json(
-        { error: "Invalid content type" },
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate X-Requested-With header
-    // (Removed to prevent 403 errors)
-    // const requestedWith = headersList.get('x-requested-with');
-    // if (requestedWith !== 'XMLHttpRequest') {
-    //   return NextResponse.json(
-    //     { error: "Invalid request" },
-    //     { status: 403, headers: { 'Content-Type': 'application/json' } }
-    //   );
-    // }
-
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
       return NextResponse.json(
         { error: 'No file uploaded' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file type
-    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
-    if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Invalid file type" },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File too large" },
         { status: 400 }
       );
     }
@@ -88,7 +28,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Extract extras personnel from columns F (5) and G (6), rows 29-34 (indices 28-33)
-    const extrasPersonnel: ExtrasPersonnel[] = [];
+    const extrasPersonnel = [];
     for (let i = 29; i <= 33; i++) {
       const row = jsonData[i] as unknown[];
       if (!row) continue;
@@ -100,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract point system data
-    const pointSystems: PointSystem[] = [];
+    const pointSystems = [];
     // Brigade Morning: J-M, 3-14 (indices 9-12, 2-13)
     for (let i = 2; i <= 13; i++) {
       const row = jsonData[i] as unknown[];
@@ -151,73 +91,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Process and validate data before insertion
-    type RawRosterRow = {
-      Date: number;
-      AM: string;
-      PM: string;
-      ReserveAM: string;
-      ReservePM: string;
-    };
-    const validData = jsonData
-      .filter((row: unknown): row is RawRosterRow => {
-        return (
-          typeof row === 'object' &&
-          row !== null &&
-          'Date' in row &&
-          'AM' in row &&
-          'PM' in row &&
-          'ReserveAM' in row &&
-          'ReservePM' in row
-        );
-      })
-      .map((row) => ({
-        date: row.Date,
-        am: row.AM,
-        pm: row.PM,
-        reserve_am: row.ReserveAM,
-        reserve_pm: row.ReservePM
-      }));
-
-    if (validData.length === 0) {
-      return NextResponse.json(
-        { error: "No valid data found in file" },
-        { status: 400 }
-      );
-    }
-
-    // Begin transaction
-    const { error: transactionError } = await supabase.rpc('begin_transaction');
-    if (transactionError) throw transactionError;
-
-    try {
-      // Clear existing data
-      const { error: clearError } = await supabase.from("roster_data").delete().neq("id", 0);
-      if (clearError) throw clearError;
-
-      // Insert new data
-      const { error: insertError } = await supabase.from("roster_data").insert(validData);
-      if (insertError) throw insertError;
-
-      // Commit transaction
-      const { error: commitError } = await supabase.rpc('commit_transaction');
-      if (commitError) throw commitError;
-
-      return NextResponse.json({ 
-        message: "File uploaded successfully",
-        data: validData,
-        extrasPersonnel,
-        pointSystems
-      });
-    } catch (error) {
-      // Rollback transaction on error
-      await supabase.rpc('rollback_transaction');
-      throw error;
-    }
+    return NextResponse.json({ data: jsonData, extrasPersonnel, pointSystems });
   } catch (error) {
     console.error('Error processing file:', error);
     return NextResponse.json(
-      { error: 'An error occurred while processing the file', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Error processing file' },
       { status: 500 }
     );
   }

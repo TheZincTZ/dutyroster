@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
-import { CalendarMap, ExtrasPersonnel } from "../lib/types";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
+
+type ExtrasPersonnel = { name: string; number: number };
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -41,7 +42,7 @@ function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   return calendar;
 }
 
-export default function AdminUpload() {
+export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,11 +152,41 @@ export default function AdminUpload() {
   }
 
   if (locked) {
+    const [unlockPassword, setUnlockPassword] = useState("");
+    const [unlockError, setUnlockError] = useState<string | null>(null);
+    const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
     return (
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600">Too many incorrect attempts. Please contact the administrator.</p>
+          <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              if (unlockPassword === UNLOCK_PASSWORD) {
+                localStorage.removeItem("adminUploadPinLock");
+                window.location.reload();
+              } else {
+                setUnlockError("Incorrect unlock password.");
+              }
+            }}
+            className="space-y-2"
+          >
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={e => setUnlockPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
+              placeholder="Enter unlock password"
+            />
+            {unlockError && <div className="text-red-600 text-sm">{unlockError}</div>}
+            <button
+              type="submit"
+              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold w-full"
+            >
+              Unlock
+            </button>
+          </form>
         </div>
       </main>
     );
