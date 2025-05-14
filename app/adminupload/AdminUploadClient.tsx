@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
+import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
+import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
-
-type ExtrasPersonnel = { name: string; number: number };
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -64,7 +63,7 @@ export default function AdminUploadClient() {
         if (Object.keys(calendarData).length > 0) {
           setCalendar(calendarData);
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load data");
       }
     };
@@ -162,16 +161,20 @@ export default function AdminUploadClient() {
 
       // Store point system data with validation
       if (result.pointSystems && Array.isArray(result.pointSystems)) {
-        const validPoints = result.pointSystems.filter((p: any) => 
+        const validPoints = result.pointSystems.filter((p: PointSystem) => 
           typeof p === 'object' && 
-          p !== null
+          p !== null &&
+          'unit' in p &&
+          'shift' in p &&
+          'name' in p &&
+          'points' in p
         );
         if (validPoints.length > 0) {
           await storePointSystemsData(validPoints);
         }
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setLoading(false);
     }

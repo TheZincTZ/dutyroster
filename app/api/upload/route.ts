@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from "@supabase/supabase-js";
 import { headers } from 'next/headers';
+import { RosterData, ExtrasPersonnel, PointSystem } from '../../lib/types';
 
 // Rate limiting
 const RATE_LIMIT = 10; // requests per minute
@@ -197,7 +198,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Process and validate data before insertion
-    const validData = jsonData.filter((row: any) => {
+    const validData = jsonData.filter((row: unknown): row is RosterData => {
       return (
         typeof row === 'object' &&
         row !== null &&

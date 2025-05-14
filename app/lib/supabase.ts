@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import { CalendarMap, ExtrasPersonnel, PointSystem } from "./types";
+import { CalendarMap, ExtrasPersonnel, PointSystem, RosterData, CacheEntry } from "./types";
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, CacheEntry<unknown>>();
 
 // Initialize Supabase client with security options
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +27,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // Helper function to validate data
-function validateData<T>(data: any, schema: (item: any) => boolean): T[] {
+function validateData<T>(data: unknown, schema: (item: unknown) => boolean): T[] {
   if (!Array.isArray(data)) return [];
   return data.filter(schema) as T[];
 }
@@ -59,7 +59,7 @@ export async function getRosterData(): Promise<CalendarMap> {
     if (error) throw error;
 
     // Validate data structure
-    const validData = validateData(data, (item) => 
+    const validData = validateData<RosterData>(data, (item): item is RosterData => 
       typeof item === 'object' &&
       item !== null &&
       'date' in item &&
@@ -101,12 +101,12 @@ export async function getExtrasPersonnel(): Promise<ExtrasPersonnel[]> {
     if (error) throw error;
 
     // Validate data structure
-    const validData = validateData<ExtrasPersonnel>(data, (item) =>
+    const validData = validateData<ExtrasPersonnel>(data, (item): item is ExtrasPersonnel =>
       typeof item === 'object' &&
       item !== null &&
-      typeof item.name === 'string' &&
-      typeof item.number === 'number' &&
-      item.name.length > 0
+      typeof (item as ExtrasPersonnel).name === 'string' &&
+      typeof (item as ExtrasPersonnel).number === 'number' &&
+      (item as ExtrasPersonnel).name.length > 0
     );
 
     setCachedData(cacheKey, validData);
@@ -131,7 +131,7 @@ export async function getPointSystems(): Promise<PointSystem[]> {
     if (error) throw error;
 
     // Validate data structure
-    const validData = validateData<PointSystem>(data, (item) =>
+    const validData = validateData<PointSystem>(data, (item): item is PointSystem =>
       typeof item === 'object' &&
       item !== null &&
       'id' in item &&
