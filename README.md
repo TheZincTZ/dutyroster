@@ -1,15 +1,68 @@
-# Duty Roster Viewer
+# Duty Roster Management System
 
-A Next.js application that allows you to upload and view Google Sheets data containing duty roster information.
+A modern web application for viewing duty rosters for National Service personnel, built with Next.js and Supabase.
+
+## Overview
+
+This application provides a user-friendly interface for NS personnel to view their duties, extras personnel information, and point systems. It offers real-time access to duty schedules and personnel information through a secure, responsive interface.
 
 ## Features
 
-- Upload Excel/CSV files
-- Display duty roster data in a responsive table format
-- Support for all data fields from the spreadsheet
-- Modern UI with loading states and error handling
+- **Roster Viewing**
+  - View monthly schedules
+  - Track today's and tomorrow's duties
+  - Search personnel duties
+  - Responsive design for all devices
 
-## Setup
+- **Extras Personnel**
+  - View extras personnel information
+  - Track personnel availability
+  - Access personnel details
+
+- **Point System**
+  - View duty points
+  - Check point allocations
+  - Monitor duty distribution
+
+## Project Structure
+
+The application follows a modern Next.js 14 architecture:
+
+```
+app/
+├── extras/         # Extras personnel view
+├── monthlyschedule/ # Monthly schedule view
+├── search/         # Personnel search
+├── todaytomorrow/  # Today/Tomorrow duties
+├── lib/           # Shared utilities and database access
+└── components/    # Reusable UI components
+```
+
+## Data Flow
+
+1. **Data Access**
+   - Secure access to roster data
+   - Real-time data updates
+   - Optimized performance
+
+2. **View Generation**
+   - Data is processed and formatted for display
+   - Responsive UI adapts to different screen sizes
+   - Interactive features for better user experience
+
+## Technical Stack
+
+- **Frontend**
+  - Next.js 14 (App Router)
+  - TypeScript
+  - Tailwind CSS
+  - Geist Font
+
+- **Backend**
+  - Supabase
+  - PostgreSQL
+
+## Getting Started
 
 1. Clone the repository
 2. Install dependencies:
@@ -17,53 +70,37 @@ A Next.js application that allows you to upload and view Google Sheets data cont
 npm install
 ```
 
-3. Create a `.env.local` file in the root directory and add your Google Sheets API credentials:
+3. Set up environment variables:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-GOOGLE_APPLICATION_CREDENTIALS=credentials.json
-```
 
-4. Create a project in the Google Cloud Console and enable the Google Sheets API
-5. Download the credentials JSON file and save it as `credentials.json` in the root directory
-
-## Development
-
-Run the development server:
-
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Usage
-
-1. Prepare your Google Sheets file with the duty roster data
-2. Export the sheet as an Excel (.xlsx) or CSV file
-3. Visit the application in your browser
-4. Click the upload button and select your file
-5. The data will be displayed in a table format
-
-## File Format Requirements
-
-The spreadsheet should have:
-- Headers in the first row
-- Data starting from the second row
-- Dates in May
-- Duty roster information
-- Scoreboard data
-
 ## Deployment
 
-The application is ready to be deployed on Vercel:
+The application is deployed on Vercel:
 
-1. Push your code to a Git repository
-2. Connect your repository to Vercel
-3. Deploy
+1. Automatic deployments from main branch
+2. Environment variables configured in Vercel
+3. Supabase database connection
 
-## Technologies Used
+## Security Features
 
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- Google Sheets API
-- XLSX library for file processing
+- Secure data access
+- Protected routes
+- Encrypted data transmission
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## License
+
+MIT License
