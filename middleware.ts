@@ -49,10 +49,9 @@ export function middleware(request: NextRequest) {
       }
 
       // For admin routes, check for authentication
-      if (request.nextUrl.pathname.startsWith('/adminupload')) {
+      if (request.nextUrl.pathname.startsWith('/adminupload') && request.nextUrl.pathname !== '/adminupload') {
         const isAuthenticated = request.cookies.has('admin_authenticated');
-        // Only redirect if not already on /adminupload root
-        if (!isAuthenticated && request.nextUrl.pathname === '/adminupload') {
+        if (!isAuthenticated) {
           return NextResponse.redirect(new URL('/adminupload', request.url));
         }
       }
