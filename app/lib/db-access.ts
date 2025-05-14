@@ -1,0 +1,130 @@
+import { createClient } from '@supabase/supabase-js';
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
+}
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+// Create two Supabase clients:
+// 1. adminClient - has write access (used only in admin upload)
+// 2. readOnlyClient - has read-only access (used in all other pages)
+const adminClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+const readOnlyClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export type CalendarEntry = {
+  AM: string;
+  PM: string;
+  ReserveAM: string;
+  ReservePM: string;
+}
+
+export type CalendarMap = { [date: string]: CalendarEntry };
+
+// Write operations - only accessible from admin upload page
+export async function storeRosterData(calendarData: CalendarMap) {
+  const { error } = await adminClient
+    .from('roster_data')
+    .upsert(
+      Object.entries(calendarData).map(([date, entry]) => ({
+        date: date,
+        am: entry.AM,
+        pm: entry.PM,
+        reserve_am: entry.ReserveAM,
+        reserve_pm: entry.ReservePM,
+      }))
+    );
+
+  if (error) {
+    console.error('Error storing roster data:', error);
+    throw error;
+  }
+}
+
+export async function storeExtrasPersonnelData(extras: { name: string, number: number }[]) {
+  const { error } = await adminClient
+    .from('extras_personnel')
+    .upsert(extras);
+
+  if (error) {
+    console.error('Error storing extras personnel data:', error);
+    throw error;
+  }
+}
+
+export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[]) {
+  const { error } = await adminClient
+    .from('point_systems')
+    .upsert(points);
+
+  if (error) {
+    console.error('Error storing point systems data:', error);
+    throw error;
+  }
+}
+
+// Read operations - accessible from all pages
+export async function getRosterData(): Promise<CalendarMap> {
+  const { data, error } = await readOnlyClient
+    .from('roster_data')
+    .select('*')
+    .order('date');
+
+  if (error) {
+    console.error('Error fetching roster data:', error);
+    throw error;
+  }
+
+  const calendarMap: CalendarMap = {};
+  data.forEach((row) => {
+    calendarMap[row.date] = {
+      AM: row.am,
+      PM: row.pm,
+      ReserveAM: row.reserve_am,
+      ReservePM: row.reserve_pm,
+    };
+  });
+
+  return calendarMap;
+}
+
+export async function getExtrasPersonnel() {
+  const { data, error } = await readOnlyClient
+    .from('extras_personnel')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching extras personnel:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function getPointSystems() {
+  const { data, error } = await readOnlyClient
+    .from('point_systems')
+    .select('*')
+    .order('unit')
+    .order('shift')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching point systems:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Export the read-only client for direct queries in other components
+export const supabase = readOnlyClient; 

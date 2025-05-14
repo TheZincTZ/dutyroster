@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap } from "../lib/supabase";
+import { getRosterData, CalendarMap } from "../lib/db-access";
 import Link from "next/link";
 
 function getDateKey(date: Date) {
