@@ -65,7 +65,7 @@ export default function AdminUploadClient() {
           setCalendar(calendarData);
         }
       } catch (err) {
-        console.error('Error loading data:', err);
+        setError("Failed to load data");
       }
     };
     
@@ -102,6 +102,20 @@ export default function AdminUploadClient() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+    if (!validTypes.includes(file.type)) {
+      setError("Invalid file type. Please upload .xlsx, .xls, or .csv files only.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size too large. Maximum size is 5MB.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     const formData = new FormData();
@@ -110,26 +124,51 @@ export default function AdminUploadClient() {
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
       });
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
+      
+      // Validate the response data structure
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error("Invalid data format received");
+      }
+
       const newCalendar = getMay2025CalendarData(result.data);
+      
+      // Validate calendar data before storing
+      if (Object.keys(newCalendar).length === 0) {
+        throw new Error("No valid calendar data found in file");
+      }
+
       setCalendar(newCalendar);
       
       // Store the calendar data in Edge Config
       await storeRosterData(newCalendar);
 
-      // Store extras personnel data (no batch)
-      if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData((result.extrasPersonnel as ExtrasPersonnel[]).map((p) => ({
-          name: p.name,
-          number: p.number
-        })));
+      // Store extras personnel data with validation
+      if (result.extrasPersonnel && Array.isArray(result.extrasPersonnel)) {
+        const validExtras = result.extrasPersonnel.filter((p: ExtrasPersonnel) => 
+          typeof p.name === 'string' && 
+          typeof p.number === 'number' &&
+          p.name.length > 0
+        );
+        if (validExtras.length > 0) {
+          await storeExtrasPersonnelData(validExtras);
+        }
       }
 
-      // Store point system data
-      if (result.pointSystems && result.pointSystems.length > 0) {
-        await storePointSystemsData(result.pointSystems);
+      // Store point system data with validation
+      if (result.pointSystems && Array.isArray(result.pointSystems)) {
+        const validPoints = result.pointSystems.filter((p: any) => 
+          typeof p === 'object' && 
+          p !== null
+        );
+        if (validPoints.length > 0) {
+          await storePointSystemsData(validPoints);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
