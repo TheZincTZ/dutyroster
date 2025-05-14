@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
-import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
-import { validateFile, validatePin, setAuthenticatedSession, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
+
+type ExtrasPersonnel = { name: string; number: number };
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -42,7 +42,7 @@ function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   return calendar;
 }
 
-export default function AdminUploadClient() {
+export default function AdminUpload() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,22 +51,17 @@ export default function AdminUploadClient() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [unlockPassword, setUnlockPassword] = useState("");
-  const [unlockError, setUnlockError] = useState<string | null>(null);
-  const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
+  // Load from Edge Config on mount
   useEffect(() => {
-    // Check authentication status
-    setAuthenticated(isAuthenticated());
-    
     const loadData = async () => {
       try {
         const calendarData = await getRosterData();
         if (Object.keys(calendarData).length > 0) {
           setCalendar(calendarData);
         }
-      } catch {
-        setError("Failed to load data");
+      } catch (err) {
+        console.error('Error loading data:', err);
       }
     };
     
@@ -90,16 +85,9 @@ export default function AdminUploadClient() {
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
-    
-    if (!validatePin(pin)) {
-      setPinError("Invalid PIN format");
-      return;
-    }
-
     if (pin === ADMIN_PIN) {
       setAuthenticated(true);
       setPinError(null);
-      setAuthenticatedSession();
     } else {
       setPinError("Incorrect PIN");
       setPinAttempts((a) => a + 1);
@@ -110,14 +98,6 @@ export default function AdminUploadClient() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
-    // Validate file
-    const { valid, error: fileError } = validateFile(file);
-    if (!valid) {
-      setError(fileError || "Invalid file");
-      return;
-    }
-
     setLoading(true);
     setError(null);
     const formData = new FormData();
@@ -126,66 +106,32 @@ export default function AdminUploadClient() {
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
       });
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
-      
-      // Validate the response data structure
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error("Invalid data format received");
-      }
-
       const newCalendar = getMay2025CalendarData(result.data);
-      
-      // Validate calendar data before storing
-      if (Object.keys(newCalendar).length === 0) {
-        throw new Error("No valid calendar data found in file");
-      }
-
       setCalendar(newCalendar);
       
-      // Store the calendar data
+      // Store the calendar data in Edge Config
       await storeRosterData(newCalendar);
 
-      // Store extras personnel data with validation
-      if (result.extrasPersonnel && Array.isArray(result.extrasPersonnel)) {
-        const validExtras = result.extrasPersonnel.filter((p: ExtrasPersonnel) => 
-          typeof p.name === 'string' && 
-          typeof p.number === 'number' &&
-          p.name.length > 0
-        );
-        if (validExtras.length > 0) {
-          await storeExtrasPersonnelData(validExtras);
-        }
+      // Store extras personnel data (no batch)
+      if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
+        await storeExtrasPersonnelData((result.extrasPersonnel as ExtrasPersonnel[]).map((p) => ({
+          name: p.name,
+          number: p.number
+        })));
       }
 
-      // Store point system data with validation
-      if (result.pointSystems && Array.isArray(result.pointSystems)) {
-        const validPoints = result.pointSystems.filter((p: PointSystem) => 
-          typeof p === 'object' && 
-          p !== null &&
-          'unit' in p &&
-          'shift' in p &&
-          'name' in p &&
-          'points' in p
-        );
-        if (validPoints.length > 0) {
-          await storePointSystemsData(validPoints);
-        }
+      // Store point system data
+      if (result.pointSystems && result.pointSystems.length > 0) {
+        await storePointSystemsData(result.pointSystems);
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    setAuthenticated(false);
-    clearAuthenticatedSession();
   };
 
   // Build May 2025 calendar grid
@@ -210,34 +156,7 @@ export default function AdminUploadClient() {
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              if (unlockPassword === UNLOCK_PASSWORD) {
-                localStorage.removeItem(PIN_LOCK_KEY);
-                window.location.reload();
-              } else {
-                setUnlockError("Incorrect unlock password.");
-              }
-            }}
-            className="space-y-2"
-          >
-            <input
-              type="password"
-              value={unlockPassword}
-              onChange={e => setUnlockPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
-              placeholder="Enter unlock password"
-            />
-            {unlockError && <div className="text-red-600 text-sm">{unlockError}</div>}
-            <button
-              type="submit"
-              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold w-full"
-            >
-              Unlock
-            </button>
-          </form>
+          <p className="text-red-600">Too many incorrect attempts. Please contact the administrator.</p>
         </div>
       </main>
     );
@@ -279,15 +198,7 @@ export default function AdminUploadClient() {
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800">Admin: Upload May 2025 Duty Roster</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-colors font-semibold"
-          >
-            Logout
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <label className="block text-sm font-medium text-green-700 mb-2">
             Upload Duty Roster File
