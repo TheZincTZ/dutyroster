@@ -52,7 +52,7 @@ export async function getRosterData(): Promise<CalendarMap> {
     if (cached) return cached;
 
     const { data, error } = await supabase
-      .from("duty_roster")
+      .from("roster_data")
       .select("*")
       .order("date", { ascending: true });
 
@@ -65,8 +65,8 @@ export async function getRosterData(): Promise<CalendarMap> {
       'date' in item &&
       'am' in item &&
       'pm' in item &&
-      'reserveam' in item &&
-      'reservepm' in item
+      'reserve_am' in item &&
+      'reserve_pm' in item
     );
 
     const calendarMap: CalendarMap = {};
@@ -74,8 +74,8 @@ export async function getRosterData(): Promise<CalendarMap> {
       calendarMap[item.date] = {
         AM: item.am,
         PM: item.pm,
-        ReserveAM: item.reserveam,
-        ReservePM: item.reservepm
+        ReserveAM: item.reserve_am,
+        ReservePM: item.reserve_pm
       };
     });
 
@@ -155,13 +155,13 @@ export function clearCache(): void {
 // Add cache clearing to data update functions
 export async function storeRosterData(data: CalendarMap): Promise<void> {
   try {
-    const { error } = await supabase.from("duty_roster").upsert(
+    const { error } = await supabase.from("roster_data").upsert(
       Object.entries(data).map(([date, values]) => ({
         date,
         am: values.AM,
         pm: values.PM,
-        reserveam: values.ReserveAM,
-        reservepm: values.ReservePM
+        reserve_am: values.ReserveAM,
+        reserve_pm: values.ReservePM
       }))
     );
     if (error) throw error;

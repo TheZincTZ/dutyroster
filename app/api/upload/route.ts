@@ -159,7 +159,13 @@ export async function POST(req: NextRequest) {
         'ReserveAM' in row &&
         'ReservePM' in row
       );
-    });
+    }).map((row: any) => ({
+      date: row.Date,
+      am: row.AM,
+      pm: row.PM,
+      reserve_am: row.ReserveAM,
+      reserve_pm: row.ReservePM
+    }));
 
     if (validData.length === 0) {
       return NextResponse.json(
@@ -174,11 +180,11 @@ export async function POST(req: NextRequest) {
 
     try {
       // Clear existing data
-      const { error: clearError } = await supabase.from("duty_roster").delete().neq("id", 0);
+      const { error: clearError } = await supabase.from("roster_data").delete().neq("id", 0);
       if (clearError) throw clearError;
 
       // Insert new data
-      const { error: insertError } = await supabase.from("duty_roster").insert(validData);
+      const { error: insertError } = await supabase.from("roster_data").insert(validData);
       if (insertError) throw insertError;
 
       // Commit transaction

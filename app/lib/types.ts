@@ -25,8 +25,8 @@ export interface RosterData {
   date: string;
   am: string;
   pm: string;
-  reserveam: string;
-  reservepm: string;
+  reserve_am: string;
+  reserve_pm: string;
 }
 
 export interface CacheEntry<T> {

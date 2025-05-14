@@ -12,14 +12,14 @@ type Duty = {
 
 interface RosterRow {
   date: number;
-  AM?: string;
-  PM?: string;
-  ReserveAM?: string;
-  ReservePM?: string;
   am?: string;
   pm?: string;
   reserve_am?: string;
   reserve_pm?: string;
+  AM?: string;
+  PM?: string;
+  ReserveAM?: string;
+  ReservePM?: string;
 }
 
 export default function SearchClient() {
