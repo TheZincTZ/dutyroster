@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
-import { validateFile, validatePin, setAuthenticatedSession, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
+import { validateFile, validatePin, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
