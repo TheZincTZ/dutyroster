@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
-import { validateFile, validatePin, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
+import { validateFile, validatePin, setAuthenticatedSession, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
-const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -54,6 +53,7 @@ export default function AdminUploadClient() {
   const [authenticated, setAuthenticated] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
+  const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
   useEffect(() => {
     // Check authentication status
@@ -87,7 +87,7 @@ export default function AdminUploadClient() {
     }
   }, [pinAttempts]);
 
-  const handlePinSubmit = async (e: React.FormEvent) => {
+  const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
     
@@ -97,27 +97,13 @@ export default function AdminUploadClient() {
     }
 
     if (pin === ADMIN_PIN) {
-      // Call the API route to set the cookie server-side
-      await fetch('/api/admin-login', { method: 'POST' });
-      window.location.reload(); // Ensure cookie is sent and middleware can see it
-      return;
+      setAuthenticated(true);
+      setPinError(null);
+      setAuthenticatedSession();
     } else {
       setPinError("Incorrect PIN");
       setPinAttempts((a) => a + 1);
       setPin("");
-    }
-  };
-
-  const handleUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (unlockPassword === UNLOCK_PASSWORD) {
-      localStorage.removeItem(PIN_LOCK_KEY);
-      setLocked(false);
-      setPinAttempts(0);
-      setUnlockError(null);
-      setUnlockPassword("");
-    } else {
-      setUnlockError("Incorrect unlock password.");
     }
   };
 
@@ -225,7 +211,18 @@ export default function AdminUploadClient() {
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
           <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
-          <form onSubmit={handleUnlock} className="space-y-2">
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              if (unlockPassword === UNLOCK_PASSWORD) {
+                localStorage.removeItem(PIN_LOCK_KEY);
+                window.location.reload();
+              } else {
+                setUnlockError("Incorrect unlock password.");
+              }
+            }}
+            className="space-y-2"
+          >
             <input
               type="password"
               value={unlockPassword}
