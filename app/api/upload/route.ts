@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Extract extras personnel from columns F (5) and G (6), rows 29-34 (indices 28-33)
-    const extrasPersonnel = [];
+    const extrasPersonnel: ExtrasPersonnel[] = [];
     for (let i = 29; i <= 33; i++) {
       const row = jsonData[i] as unknown[];
       if (!row) continue;
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract point system data
-    const pointSystems = [];
+    const pointSystems: PointSystem[] = [];
     // Brigade Morning: J-M, 3-14 (indices 9-12, 2-13)
     for (let i = 2; i <= 13; i++) {
       const row = jsonData[i] as unknown[];

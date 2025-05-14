@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
+import { validateFile, validatePin, setAuthenticatedSession, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
@@ -50,13 +51,14 @@ export default function AdminUploadClient() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  // Unlock password state (must be at top level)
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
-  // Load from Edge Config on mount
   useEffect(() => {
+    // Check authentication status
+    setAuthenticated(isAuthenticated());
+    
     const loadData = async () => {
       try {
         const calendarData = await getRosterData();
@@ -88,9 +90,16 @@ export default function AdminUploadClient() {
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
+    
+    if (!validatePin(pin)) {
+      setPinError("Invalid PIN format");
+      return;
+    }
+
     if (pin === ADMIN_PIN) {
       setAuthenticated(true);
       setPinError(null);
+      setAuthenticatedSession();
     } else {
       setPinError("Incorrect PIN");
       setPinAttempts((a) => a + 1);
@@ -102,16 +111,10 @@ export default function AdminUploadClient() {
     const file = event.target.files?.[0];
     if (!file) return;
     
-    // Validate file type
-    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
-    if (!validTypes.includes(file.type)) {
-      setError("Invalid file type. Please upload .xlsx, .xls, or .csv files only.");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File size too large. Maximum size is 5MB.");
+    // Validate file
+    const { valid, error: fileError } = validateFile(file);
+    if (!valid) {
+      setError(fileError || "Invalid file");
       return;
     }
 
@@ -144,7 +147,7 @@ export default function AdminUploadClient() {
 
       setCalendar(newCalendar);
       
-      // Store the calendar data in Edge Config
+      // Store the calendar data
       await storeRosterData(newCalendar);
 
       // Store extras personnel data with validation
@@ -180,6 +183,11 @@ export default function AdminUploadClient() {
     }
   };
 
+  const handleLogout = () => {
+    setAuthenticated(false);
+    clearAuthenticatedSession();
+  };
+
   // Build May 2025 calendar grid
   const daysInMonth = 31;
   const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
@@ -207,7 +215,7 @@ export default function AdminUploadClient() {
             onSubmit={e => {
               e.preventDefault();
               if (unlockPassword === UNLOCK_PASSWORD) {
-                localStorage.removeItem("adminUploadPinLock");
+                localStorage.removeItem(PIN_LOCK_KEY);
                 window.location.reload();
               } else {
                 setUnlockError("Incorrect unlock password.");
@@ -271,7 +279,15 @@ export default function AdminUploadClient() {
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-green-800">Admin: Upload May 2025 Duty Roster</h1>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-colors font-semibold"
+          >
+            Logout
+          </button>
+        </div>
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <label className="block text-sm font-medium text-green-700 mb-2">
             Upload Duty Roster File
