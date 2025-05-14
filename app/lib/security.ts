@@ -42,7 +42,7 @@ export function validateCalendarData(data: unknown): data is CalendarMap {
   if (typeof data !== 'object' || data === null) return false;
   
   const entries = Object.entries(data as Record<string, unknown>);
-  return entries.every(([date, entry]) => {
+  return entries.every(([, entry]) => {
     if (typeof entry !== 'object' || entry === null) return false;
     const e = entry as Record<string, unknown>;
     return (
