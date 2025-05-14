@@ -3,13 +3,9 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, storeExtrasPersonnelData, storePointSystemsData } from "../lib/supabase";
 import { CalendarMap, ExtrasPersonnel, PointSystem } from "../lib/types";
-import { validateFile, validatePin, clearAuthenticatedSession, isAuthenticated } from "../lib/security";
+import { validateFile } from "../lib/security";
 
 const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
-const ADMIN_PIN = "7954";
-const MAX_ATTEMPTS = 5;
-const PIN_LOCK_KEY = "adminUploadPinLock";
-const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
 function getMay2025CalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -47,18 +43,8 @@ export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState<string | null>(null);
-  const [pinAttempts, setPinAttempts] = useState(0);
-  const [locked, setLocked] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [unlockPassword, setUnlockPassword] = useState("");
-  const [unlockError, setUnlockError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check authentication status
-    setAuthenticated(isAuthenticated());
-    
     const loadData = async () => {
       try {
         const calendarData = await getRosterData();
@@ -69,57 +55,8 @@ export default function AdminUploadClient() {
         setError("Failed to load data");
       }
     };
-    
     loadData();
-    
-    // Check lock state
-    const lockState = localStorage.getItem(PIN_LOCK_KEY);
-    if (lockState === "locked") {
-      setLocked(true);
-    }
   }, []);
-
-  // Lock if attempts exceeded
-  useEffect(() => {
-    if (pinAttempts >= MAX_ATTEMPTS) {
-      setLocked(true);
-      localStorage.setItem(PIN_LOCK_KEY, "locked");
-    }
-  }, [pinAttempts]);
-
-  const handlePinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (locked) return;
-    
-    if (!validatePin(pin)) {
-      setPinError("Invalid PIN format");
-      return;
-    }
-
-    if (pin === ADMIN_PIN) {
-      // Call the API route to set the cookie server-side
-      await fetch('/api/admin-login', { method: 'POST' });
-      window.location.reload(); // Ensure cookie is sent and middleware can see it
-      return;
-    } else {
-      setPinError("Incorrect PIN");
-      setPinAttempts((a) => a + 1);
-      setPin("");
-    }
-  };
-
-  const handleUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (unlockPassword === UNLOCK_PASSWORD) {
-      localStorage.removeItem(PIN_LOCK_KEY);
-      setLocked(false);
-      setPinAttempts(0);
-      setUnlockError(null);
-      setUnlockPassword("");
-    } else {
-      setUnlockError("Incorrect unlock password.");
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -197,11 +134,6 @@ export default function AdminUploadClient() {
     }
   };
 
-  const handleLogout = () => {
-    setAuthenticated(false);
-    clearAuthenticatedSession();
-  };
-
   // Build May 2025 calendar grid
   const daysInMonth = 31;
   const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
@@ -219,77 +151,11 @@ export default function AdminUploadClient() {
     weeks.push(week);
   }
 
-  if (locked) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-green-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
-          <form onSubmit={handleUnlock} className="space-y-2">
-            <input
-              type="password"
-              value={unlockPassword}
-              onChange={e => setUnlockPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
-              placeholder="Enter unlock password"
-            />
-            {unlockError && <div className="text-red-600 text-sm">{unlockError}</div>}
-            <button
-              type="submit"
-              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold w-full"
-            >
-              Unlock
-            </button>
-          </form>
-        </div>
-      </main>
-    );
-  }
-
-  if (!authenticated) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-green-50">
-        <form onSubmit={handlePinSubmit} className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-          <h2 className="text-2xl font-bold text-green-800 mb-6 text-center">Admin PIN Required</h2>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]{4}"
-            maxLength={4}
-            value={pin}
-            onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ""))}
-            className="w-full mb-4 px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
-            placeholder="Enter 4-digit PIN"
-            disabled={locked}
-            autoFocus
-          />
-          {pinError && <div className="text-red-600 mb-2 text-center">{pinError}</div>}
-          <button
-            type="submit"
-            className="w-full bg-green-700 text-white py-2 rounded font-semibold hover:bg-green-800 transition"
-            disabled={locked || pin.length !== 4}
-          >
-            Unlock
-          </button>
-          <div className="mt-4 text-sm text-green-700 text-center">
-            Attempts left: {MAX_ATTEMPTS - pinAttempts}
-          </div>
-        </form>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-green-800">Admin: Upload May 2025 Duty Roster</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-colors font-semibold"
-          >
-            Logout
-          </button>
         </div>
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <label className="block text-sm font-medium text-green-700 mb-2">
