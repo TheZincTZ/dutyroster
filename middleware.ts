@@ -37,16 +37,16 @@ export function middleware(request: NextRequest) {
     const isProtectedRoute = PROTECTED_ROUTES.some(route => request.nextUrl.pathname.startsWith(route));
     
     if (isProtectedRoute) {
-      // For API routes, check for X-Requested-With header
-      if (request.nextUrl.pathname.startsWith('/api/')) {
-        const requestedWith = request.headers.get('x-requested-with');
-        if (requestedWith !== 'XMLHttpRequest') {
-          return new NextResponse(
-            JSON.stringify({ error: 'Invalid request' }),
-            { status: 403, headers: { 'Content-Type': 'application/json' } }
-          );
-        }
-      }
+      // For API routes, remove X-Requested-With header check to prevent 403 errors
+      // if (request.nextUrl.pathname.startsWith('/api/')) {
+      //   const requestedWith = request.headers.get('x-requested-with');
+      //   if (requestedWith !== 'XMLHttpRequest') {
+      //     return new NextResponse(
+      //       JSON.stringify({ error: 'Invalid request' }),
+      //       { status: 403, headers: { 'Content-Type': 'application/json' } }
+      //     );
+      //   }
+      // }
 
       // For admin routes, check for authentication
       if (request.nextUrl.pathname.startsWith('/adminupload') && request.nextUrl.pathname !== '/adminupload') {

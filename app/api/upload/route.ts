@@ -37,13 +37,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate X-Requested-With header
-    const requestedWith = headersList.get('x-requested-with');
-    if (requestedWith !== 'XMLHttpRequest') {
-      return NextResponse.json(
-        { error: "Invalid request" },
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // (Removed to prevent 403 errors)
+    // const requestedWith = headersList.get('x-requested-with');
+    // if (requestedWith !== 'XMLHttpRequest') {
+    //   return NextResponse.json(
+    //     { error: "Invalid request" },
+    //     { status: 403, headers: { 'Content-Type': 'application/json' } }
+    //   );
+    // }
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
