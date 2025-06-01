@@ -9,6 +9,15 @@ const PIN_LOCK_KEY = "adminUploadPinLock";
 
 type ExtrasPersonnel = { name: string; number: number };
 
+type PointSystem = {
+  unit: 'brigade' | 'ssp';
+  shift: 'morning' | 'night';
+  name: string;
+  points: number;
+  months_valid: number;
+  average_points: number;
+};
+
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
   
@@ -62,8 +71,8 @@ function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
   return extras;
 }
 
-function getPointSystemData(matrix: string[][]): any[] {
-  const points: any[] = [];
+function getPointSystemData(matrix: string[][]): PointSystem[] {
+  const points: PointSystem[] = [];
   
   // Map Excel columns J-M to array indices 9-12
   const COLUMN_MAP = {
