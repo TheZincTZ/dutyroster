@@ -148,6 +148,7 @@ export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [pinAttempts, setPinAttempts] = useState(0);
@@ -211,6 +212,7 @@ export default function AdminUploadClient() {
     if (!file) return;
     setLoading(true);
     setError(null);
+    setSuccess(null);
     const formData = new FormData();
     formData.append("file", file);
     try {
@@ -237,6 +239,8 @@ export default function AdminUploadClient() {
       if (pointSystems.length > 0) {
         await storePointSystemsData(pointSystems);
       }
+
+      setSuccess("File uploaded successfully! Schedule has been updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -355,6 +359,7 @@ export default function AdminUploadClient() {
         {loading && (
           <div className="text-center py-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
+            <p className="mt-2 text-green-700">Processing file and updating database...</p>
           </div>
         )}
         {error && (
@@ -362,44 +367,64 @@ export default function AdminUploadClient() {
             {error}
           </div>
         )}
+        {success && (
+          <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-8">
+            {success}
+          </div>
+        )}
         {Object.keys(calendar).length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-green-300">
-              <thead>
-                <tr>
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                    <th key={idx} className="px-2 py-2 border bg-green-100 text-xs font-semibold text-green-700">
-                      {day}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((week, wIdx) => (
-                  <tr key={wIdx}>
-                    {week.map((date, dIdx) => (
-                      <td key={dIdx} className="align-top px-2 py-2 border min-w-[120px]">
-                        {date > 0 ? (
-                          <div>
-                            <div className="font-bold text-green-700 mb-1">{date}</div>
-                            {calendar[date] && (
-                              <div>
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-green-200 text-center">—</div>
-                        )}
-                      </td>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-green-800 mb-6">Current Schedule</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-green-300 rounded-xl">
+                <thead>
+                  <tr>
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                      <th key={idx} className="px-4 py-3 border bg-green-100 text-green-700 font-semibold">
+                        {day}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {weeks.map((week, wIdx) => (
+                    <tr key={wIdx}>
+                      {week.map((date, dIdx) => (
+                        <td key={dIdx} className="align-top px-4 py-3 border min-w-[150px] bg-green-50 hover:bg-green-100 transition">
+                          {date > 0 ? (
+                            <div>
+                              <div className="font-bold text-green-700 mb-2 text-lg">{date}</div>
+                              {calendar[date] && (
+                                <div className="space-y-2">
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-green-700">AM:</div>
+                                    <div className="text-green-800">{calendar[date].AM}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-green-700">PM:</div>
+                                    <div className="text-green-800">{calendar[date].PM}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-red-700">Reserve AM:</div>
+                                    <div className="text-red-700">{calendar[date].ReserveAM}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-red-700">Reserve PM:</div>
+                                    <div className="text-red-700">{calendar[date].ReservePM}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-green-200 text-center">—</div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
