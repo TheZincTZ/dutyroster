@@ -10,7 +10,7 @@ const PIN_LOCK_KEY = "adminUploadPinLock";
 
 type ExtrasPersonnel = { name: string; number: number };
 
-function getMay2025CalendarData(matrix: string[][]): CalendarMap {
+function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
   for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
     const weekStart = DATE_ROW_INDEXES[w];
@@ -54,6 +54,12 @@ export default function AdminUploadClient() {
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
+
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
   // Load from Edge Config on mount
   useEffect(() => {
@@ -112,7 +118,7 @@ export default function AdminUploadClient() {
       });
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
-      const newCalendar = getMay2025CalendarData(result.data);
+      const newCalendar = getCurrentMonthCalendarData(result.data);
       setCalendar(newCalendar);
       
       // Store the calendar data in Edge Config
@@ -137,9 +143,9 @@ export default function AdminUploadClient() {
     }
   };
 
-  // Build May 2025 calendar grid
-  const daysInMonth = 31;
-  const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
+  // Build current month calendar grid
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun, 1=Mon, ...
   const weeks: number[][] = [];
   let week: number[] = Array(firstDayOfWeek).fill(0);
   for (let d = 1; d <= daysInMonth; d++) {
@@ -228,7 +234,7 @@ export default function AdminUploadClient() {
   return (
     <main className="min-h-screen p-8 bg-green-50">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload May 2025 Duty Roster</h1>
+        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload {monthName} {currentYear} Duty Roster</h1>
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <label className="block text-sm font-medium text-green-700 mb-2">
             Upload Duty Roster File

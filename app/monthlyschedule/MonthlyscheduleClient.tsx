@@ -23,9 +23,14 @@ export default function MonthlyscheduleClient() {
     loadData();
   }, []);
 
-  // Build May 2025 calendar grid
-  const daysInMonth = 31;
-  const firstDayOfWeek = new Date(2025, 4, 1).getDay(); // 0=Sun, 1=Mon, ...
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  // Get days in current month
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun, 1=Mon, ...
   const weeks: number[][] = [];
   let week: number[] = Array(firstDayOfWeek).fill(0);
   for (let d = 1; d <= daysInMonth; d++) {
@@ -40,13 +45,16 @@ export default function MonthlyscheduleClient() {
     weeks.push(week);
   }
 
+  // Format month name
+  const monthName = currentDate.toLocaleString('default', { month: 'long' });
+
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
             <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
-            May 2025 Duty Roster
+            {monthName} {currentYear} Duty Roster
           </h1>
           <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
