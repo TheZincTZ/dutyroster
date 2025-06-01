@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/db-access";
 
-const DATE_ROW_INDEXES = [1, 6, 11, 16, 21]; // 0-based: rows 2,7,12,17,22
 const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
 const PIN_LOCK_KEY = "adminUploadPinLock";
