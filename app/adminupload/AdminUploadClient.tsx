@@ -46,6 +46,95 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   return calendar;
 }
 
+function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
+  const extras: ExtrasPersonnel[] = [];
+  
+  // Process rows 35-38 (indices 34-37) for extras personnel
+  for (let row = 34; row <= 37; row++) {
+    const name = matrix[row]?.[5]?.toString().trim(); // Column F
+    const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
+    
+    if (name) {
+      extras.push({ name, number });
+    }
+  }
+  
+  return extras;
+}
+
+function getPointSystemData(matrix: string[][]): any[] {
+  const points: any[] = [];
+  
+  // Map Excel columns J-M to array indices 9-12
+  const COLUMN_MAP = {
+    'J': 9,  // Name
+    'K': 10, // Points
+    'L': 11, // Months Valid
+    'M': 12  // Average Points
+  };
+
+  // Brigade Morning Shift (J3-M14)
+  for (let row = 2; row <= 13; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+    if (name) {
+      points.push({
+        unit: 'brigade',
+        shift: 'morning',
+        name,
+        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+      });
+    }
+  }
+
+  // Brigade Night Shift (J17-M31)
+  for (let row = 16; row <= 30; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+    if (name) {
+      points.push({
+        unit: 'brigade',
+        shift: 'night',
+        name,
+        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+      });
+    }
+  }
+
+  // SSP Morning Shift (J35-M35)
+  const sspMorningRow = 34;
+  const sspMorningName = matrix[sspMorningRow]?.[COLUMN_MAP['J']]?.toString().trim();
+  if (sspMorningName) {
+    points.push({
+      unit: 'ssp',
+      shift: 'morning',
+      name: sspMorningName,
+      points: Number(matrix[sspMorningRow]?.[COLUMN_MAP['K']] || 0),
+      months_valid: Number(matrix[sspMorningRow]?.[COLUMN_MAP['L']] || 0),
+      average_points: Number(matrix[sspMorningRow]?.[COLUMN_MAP['M']] || 0)
+    });
+  }
+
+  // SSP Night Shift (J37-M44)
+  for (let row = 36; row <= 43; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+    if (name) {
+      points.push({
+        unit: 'ssp',
+        shift: 'night',
+        name,
+        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+      });
+    }
+  }
+
+  return points;
+}
+
 export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
@@ -122,23 +211,22 @@ export default function AdminUploadClient() {
       });
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
+      
+      // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
       setCalendar(newCalendar);
-      
-      // Store the calendar data in Edge Config
       await storeRosterData(newCalendar);
 
-      // Store extras personnel data (no batch)
-      if (result.extrasPersonnel && result.extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData((result.extrasPersonnel as ExtrasPersonnel[]).map((p) => ({
-          name: p.name,
-          number: p.number
-        })));
+      // Process and store extras personnel data
+      const extrasPersonnel = getExtrasPersonnelData(result.data);
+      if (extrasPersonnel.length > 0) {
+        await storeExtrasPersonnelData(extrasPersonnel);
       }
 
-      // Store point system data
-      if (result.pointSystems && result.pointSystems.length > 0) {
-        await storePointSystemsData(result.pointSystems);
+      // Process and store point system data
+      const pointSystems = getPointSystemData(result.data);
+      if (pointSystems.length > 0) {
+        await storePointSystemsData(pointSystems);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
