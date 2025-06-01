@@ -12,33 +12,38 @@ type ExtrasPersonnel = { name: string; number: number };
 
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
-  for (let w = 0; w < DATE_ROW_INDEXES.length; w++) {
-    const weekStart = DATE_ROW_INDEXES[w];
-    const dateRow = matrix[weekStart];
-    const amRow = matrix[weekStart + 1];
-    const pmRow = matrix[weekStart + 2];
-    const reserveAmRow = matrix[weekStart + 3];
-    const reservePmRow = matrix[weekStart + 4];
+  
+  // Map Excel columns A-H to array indices 0-7
+  const COLUMN_MAP = {
+    'A': 0, // Date
+    'B': 1, // AM
+    'C': 2, // PM
+    'D': 3, // Reserve AM
+    'E': 4, // Reserve PM
+    'F': 5, // Extra column
+    'G': 6, // Extra column
+    'H': 7  // Extra column
+  };
 
-    // For the first week, use columns 3-8 (D-I); for others, use 1-8 (B-I)
-    const colStart = w === 0 ? 3 : 1;
-    const colEnd = 8; // inclusive, column I
+  // Process each row from 1 to 31
+  for (let row = 0; row < 31; row++) {
+    const dateCell = matrix[row]?.[COLUMN_MAP['A']];
+    if (!dateCell) continue;
+    
+    const match = String(dateCell).match(/\d+/);
+    if (!match) continue;
+    
+    const dateNum = parseInt(match[0], 10);
+    if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
 
-    for (let col = colStart; col <= colEnd; col++) {
-      const dateCell = dateRow[col];
-      if (!dateCell) continue;
-      const match = String(dateCell).match(/\d+/);
-      if (!match) continue;
-      const dateNum = parseInt(match[0], 10);
-      if (isNaN(dateNum)) continue;
-      calendar[dateNum] = {
-        AM: amRow[col] || '',
-        PM: pmRow[col] || '',
-        ReserveAM: reserveAmRow[col] || '',
-        ReservePM: reservePmRow[col] || '',
-      };
-    }
+    calendar[dateNum] = {
+      AM: matrix[row]?.[COLUMN_MAP['B']] || '',
+      PM: matrix[row]?.[COLUMN_MAP['C']] || '',
+      ReserveAM: matrix[row]?.[COLUMN_MAP['D']] || '',
+      ReservePM: matrix[row]?.[COLUMN_MAP['E']] || '',
+    };
   }
+
   return calendar;
 }
 
