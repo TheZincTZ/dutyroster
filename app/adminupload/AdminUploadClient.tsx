@@ -21,35 +21,33 @@ type PointSystem = {
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
   
-  // Map Excel columns A-H to array indices 0-7
-  const COLUMN_MAP = {
-    'A': 0, // Date
-    'B': 1, // AM
-    'C': 2, // PM
-    'D': 3, // Reserve AM
-    'E': 4, // Reserve PM
-    'F': 5, // Extra column
-    'G': 6, // Extra column
-    'H': 7  // Extra column
-  };
+  // Skip the first row (month header) and start from row 1
+  // Each week's data is in 4 rows: AM, PM, Reserve AM, Reserve PM
+  for (let weekStart = 1; weekStart < matrix.length; weekStart += 5) {
+    const dateRow = matrix[weekStart];
+    const amRow = matrix[weekStart + 1];
+    const pmRow = matrix[weekStart + 2];
+    const reserveAmRow = matrix[weekStart + 3];
+    const reservePmRow = matrix[weekStart + 4];
 
-  // Process each row from 1 to 31
-  for (let row = 0; row < 31; row++) {
-    const dateCell = matrix[row]?.[COLUMN_MAP['A']];
-    if (!dateCell) continue;
-    
-    const match = String(dateCell).match(/\d+/);
-    if (!match) continue;
-    
-    const dateNum = parseInt(match[0], 10);
-    if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
+    // Process each day in the week (columns 1-7)
+    for (let col = 1; col <= 7; col++) {
+      const dateCell = dateRow[col];
+      if (!dateCell) continue;
+      
+      const match = String(dateCell).match(/\d+/);
+      if (!match) continue;
+      
+      const dateNum = parseInt(match[0], 10);
+      if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
 
-    calendar[dateNum] = {
-      AM: matrix[row]?.[COLUMN_MAP['B']] || '',
-      PM: matrix[row]?.[COLUMN_MAP['C']] || '',
-      ReserveAM: matrix[row]?.[COLUMN_MAP['D']] || '',
-      ReservePM: matrix[row]?.[COLUMN_MAP['E']] || '',
-    };
+      calendar[dateNum] = {
+        AM: amRow[col]?.toString().trim() || '',
+        PM: pmRow[col]?.toString().trim() || '',
+        ReserveAM: reserveAmRow[col]?.toString().trim() || '',
+        ReservePM: reservePmRow[col]?.toString().trim() || '',
+      };
+    }
   }
 
   return calendar;
@@ -390,7 +388,7 @@ export default function AdminUploadClient() {
                   {weeks.map((week, wIdx) => (
                     <tr key={wIdx}>
                       {week.map((date, dIdx) => (
-                        <td key={dIdx} className="align-top px-4 py-3 border min-w-[150px] bg-green-50 hover:bg-green-100 transition">
+                        <td key={dIdx} className="align-top px-4 py-3 border min-w-[180px] bg-green-50 hover:bg-green-100 transition">
                           {date > 0 ? (
                             <div>
                               <div className="font-bold text-green-700 mb-2 text-lg">{date}</div>
@@ -398,19 +396,19 @@ export default function AdminUploadClient() {
                                 <div className="space-y-2">
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-green-700">AM:</div>
-                                    <div className="text-green-800">{calendar[date].AM}</div>
+                                    <div className="text-green-800 text-sm">{calendar[date].AM}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-green-700">PM:</div>
-                                    <div className="text-green-800">{calendar[date].PM}</div>
+                                    <div className="text-green-800 text-sm">{calendar[date].PM}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve AM:</div>
-                                    <div className="text-red-700">{calendar[date].ReserveAM}</div>
+                                    <div className="text-red-700 text-sm">{calendar[date].ReserveAM}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve PM:</div>
-                                    <div className="text-red-700">{calendar[date].ReservePM}</div>
+                                    <div className="text-red-700 text-sm">{calendar[date].ReservePM}</div>
                                   </div>
                                 </div>
                               )}
