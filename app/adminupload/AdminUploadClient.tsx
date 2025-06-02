@@ -160,6 +160,14 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   return points;
 }
 
+// Helper function to render a name with (EXTRA) in bold red
+function renderName(name: string) {
+  if (name && name.includes('(EXTRA)')) {
+    return <span style={{ color: 'red', fontWeight: 'bold' }}>{name}</span>;
+  }
+  return name;
+}
+
 export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(false);
@@ -414,19 +422,19 @@ export default function AdminUploadClient() {
                                 <div className="space-y-2">
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-green-700">AM:</div>
-                                    <div className="text-green-800 text-sm">{calendar[date].AM}</div>
+                                    <div className="text-green-800 text-sm">{renderName(calendar[date].AM)}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-green-700">PM:</div>
-                                    <div className="text-green-800 text-sm">{calendar[date].PM}</div>
+                                    <div className="text-green-800 text-sm">{renderName(calendar[date].PM)}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve AM:</div>
-                                    <div className="text-red-700 text-sm">{calendar[date].ReserveAM}</div>
+                                    <div className="text-red-700 text-sm">{renderName(calendar[date].ReserveAM)}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve PM:</div>
-                                    <div className="text-red-700 text-sm">{calendar[date].ReservePM}</div>
+                                    <div className="text-red-700 text-sm">{renderName(calendar[date].ReservePM)}</div>
                                   </div>
                                 </div>
                               )}
