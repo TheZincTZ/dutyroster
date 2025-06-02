@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "./lib/db-access";
 import Link from 'next/link';
+import { renderName } from "./lib/renderName";
 
 export default function HomeClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -129,11 +130,11 @@ export default function HomeClient() {
           <div className="space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="font-semibold text-green-700 min-w-[80px]">AM:</span>
-              <span className="text-green-800">{amEntry}</span>
+              <span className="text-green-800">{renderName(amEntry)}</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="font-semibold text-red-700 min-w-[80px]">Reserve AM:</span>
-              <span className="text-red-700">{amReserve}</span>
+              <span className="text-red-700">{renderName(amReserve)}</span>
             </div>
           </div>
         </div>
@@ -144,11 +145,11 @@ export default function HomeClient() {
           <div className="space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="font-semibold text-green-700 min-w-[80px]">PM:</span>
-              <span className="text-green-800">{pmEntry}</span>
+              <span className="text-green-800">{renderName(pmEntry)}</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="font-semibold text-red-700 min-w-[80px]">Reserve PM:</span>
-              <span className="text-red-700">{pmReserve}</span>
+              <span className="text-red-700">{renderName(pmReserve)}</span>
             </div>
           </div>
         </div>

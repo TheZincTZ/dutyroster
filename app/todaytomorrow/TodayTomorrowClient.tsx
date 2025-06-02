@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "../lib/db-access";
 import Link from "next/link";
+import { renderName } from "../lib/renderName";
 
 function getDateKey(date: Date) {
   return date.getDate();
@@ -65,10 +66,10 @@ export default function TodayTomorrowClient() {
               </h2>
               {todayEntry ? (
                 <div className="space-y-2">
-                  <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{todayEntry.AM}</span></div>
-                  <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{todayEntry.PM}</span></div>
-                  <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{todayEntry.ReserveAM}</span></div>
-                  <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{todayEntry.ReservePM}</span></div>
+                  <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(todayEntry.AM)}</span></div>
+                  <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(todayEntry.PM)}</span></div>
+                  <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{renderName(todayEntry.ReserveAM)}</span></div>
+                  <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{renderName(todayEntry.ReservePM)}</span></div>
                 </div>
               ) : (
                 <div className="text-green-700 flex items-center gap-2"><span>📅</span>No duty data for today.</div>
@@ -81,10 +82,10 @@ export default function TodayTomorrowClient() {
               </h2>
               {tomorrowEntry ? (
                 <div className="space-y-2">
-                  <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{tomorrowEntry.AM}</span></div>
-                  <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{tomorrowEntry.PM}</span></div>
-                  <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{tomorrowEntry.ReserveAM}</span></div>
-                  <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{tomorrowEntry.ReservePM}</span></div>
+                  <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(tomorrowEntry.AM)}</span></div>
+                  <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(tomorrowEntry.PM)}</span></div>
+                  <div><span className="font-semibold text-red-700">Reserve AM:</span> <span className="text-red-700">{renderName(tomorrowEntry.ReserveAM)}</span></div>
+                  <div><span className="font-semibold text-red-700">Reserve PM:</span> <span className="text-red-700">{renderName(tomorrowEntry.ReservePM)}</span></div>
                 </div>
               ) : (
                 <div className="text-green-700 flex items-center gap-2"><span>📅</span>No duty data for tomorrow.</div>

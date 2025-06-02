@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRosterData, CalendarMap } from "../lib/db-access";
 import Link from "next/link";
+import { renderName } from "../lib/renderName";
 
 export default function MonthlyscheduleClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
@@ -87,10 +88,10 @@ export default function MonthlyscheduleClient() {
                             <div className="font-bold text-green-700 mb-1 text-xs sm:text-lg">{date}</div>
                             {calendar[date] && (
                               <div className="space-y-1">
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{calendar[date].AM}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{calendar[date].PM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{calendar[date].ReserveAM}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{calendar[date].ReservePM}</span></div>
+                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(calendar[date].AM)}</span></div>
+                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(calendar[date].PM)}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{renderName(calendar[date].ReserveAM)}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{renderName(calendar[date].ReservePM)}</span></div>
                               </div>
                             )}
                           </div>
