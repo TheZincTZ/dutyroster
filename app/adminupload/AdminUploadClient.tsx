@@ -425,12 +425,12 @@ export default function AdminUploadClient() {
                                     <div className="text-green-800 text-sm">{renderName(calendar[date].AM)}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-green-700">PM:</div>
-                                    <div className="text-green-800 text-sm">{renderName(calendar[date].PM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve AM:</div>
                                     <div className="text-red-700 text-sm">{renderName(calendar[date].ReserveAM)}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-green-700">PM:</div>
+                                    <div className="text-green-800 text-sm">{renderName(calendar[date].PM)}</div>
                                   </div>
                                   <div className="bg-white p-2 rounded shadow-sm">
                                     <div className="font-semibold text-red-700">Reserve PM:</div>

@@ -8,6 +8,7 @@ type Duty = {
   date: number;
   shift: string;
   type: string;
+  isExtra: boolean;
 };
 
 interface RosterRow {
@@ -31,15 +32,17 @@ export default function SearchClient() {
   const [error, setError] = useState<string | null>(null);
   const [rosterData, setRosterData] = useState<RosterRow[]>([]);
 
-  // Helper to extract all names from a cell
-  function extractNames(cell: string): string[] {
+  // Helper to extract all names from a cell, returning both the clean name and if it's extra
+  function extractNamesWithExtra(cell: string): { name: string, isExtra: boolean }[] {
     if (!cell) return [];
-    // Remove parentheses, split by comma and &
     return cell
-      .replace(/[()]/g, "")
       .split(/,|&/)
-      .map((n) => n.trim().toLowerCase())
-      .filter((n) => n.length > 0);
+      .map((n) => n.trim())
+      .filter((n) => n.length > 0)
+      .map((n) => ({
+        name: n.replace(/\s*\(EXTRA\)\s*$/i, '').toLowerCase(),
+        isExtra: /\(EXTRA\)$/i.test(n)
+      }));
   }
 
   // Load all unique personnel names on mount
@@ -59,7 +62,7 @@ export default function SearchClient() {
             row.ReserveAM ?? row.reserve_am,
             row.ReservePM ?? row.reserve_pm
           ].filter((cell): cell is string => typeof cell === 'string').forEach((cell) => {
-            extractNames(cell).forEach((name) => nameSet.add(name));
+            extractNamesWithExtra(cell).forEach(({ name }) => nameSet.add(name));
           });
         });
         setAllNames(Array.from(nameSet));
@@ -87,33 +90,27 @@ export default function SearchClient() {
     setResults([]);
   }, [searchTerm, allNames]);
 
-  // When a name is selected, find all duties for that name
+  // When a name is selected, find all duties for that name, and indicate if it's an extra
   useEffect(() => {
     if (!selectedName) return;
-    // Debug log
-    console.log('Selected name:', selectedName);
-    console.log('Roster data:', rosterData);
     const duties: Duty[] = [];
     const searchName = selectedName.trim().toLowerCase();
     rosterData.forEach((day) => {
-      // Support both uppercase and lowercase field names
       const am = day.AM ?? day.am ?? '';
       const pm = day.PM ?? day.pm ?? '';
       const reserveAM = day.ReserveAM ?? day.reserve_am ?? '';
       const reservePM = day.ReservePM ?? day.reserve_pm ?? '';
-      const check = (cell: string) => extractNames(cell).includes(searchName);
-      if (check(am)) {
-        duties.push({ date: day.date, shift: "AM", type: "Primary" });
-      }
-      if (check(pm)) {
-        duties.push({ date: day.date, shift: "PM", type: "Primary" });
-      }
-      if (check(reserveAM)) {
-        duties.push({ date: day.date, shift: "AM", type: "Reserve" });
-      }
-      if (check(reservePM)) {
-        duties.push({ date: day.date, shift: "PM", type: "Reserve" });
-      }
+      const check = (cell: string, shift: string, type: string) => {
+        extractNamesWithExtra(cell).forEach(({ name, isExtra }) => {
+          if (name === searchName) {
+            duties.push({ date: day.date, shift, type, isExtra });
+          }
+        });
+      };
+      check(am, "AM", "Primary");
+      check(pm, "PM", "Primary");
+      check(reserveAM, "AM", "Reserve");
+      check(reservePM, "PM", "Reserve");
     });
     setResults(duties);
   }, [selectedName, rosterData]);
@@ -232,6 +229,7 @@ export default function SearchClient() {
                           <span className="font-semibold text-green-700">{new Date(2025, 4, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
                           <span className="ml-2 text-green-800">
                             {result.shift} Shift ({result.type})
+                            {result.isExtra && <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded font-bold">EXTRA DUTY</span>}
                           </span>
                         </div>
                         <div className="text-sm text-green-600">
