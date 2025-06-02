@@ -62,8 +62,8 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
     if (!foundValidDate) break;
   }
-  // Special case: If 1st June is missing, get it from H2-H6
-  if (!calendar[1] && matrix[1]?.[8] && parseInt(matrix[1][8], 10) === 1) {
+  // Always set 1st June from H2-H6 if H2 is '1'
+  if (matrix[1]?.[8] && parseInt(matrix[1][8], 10) === 1) {
     calendar[1] = {
       AM: matrix[2]?.[8]?.toString().trim() || '',
       PM: matrix[3]?.[8]?.toString().trim() || '',
