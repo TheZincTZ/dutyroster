@@ -18,6 +18,7 @@ export default function PointsystemClient() {
   const [points, setPoints] = useState<PointSystem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortDesc, setSortDesc] = useState(true);
 
   useEffect(() => {
     const fetchPoints = async () => {
@@ -44,8 +45,15 @@ export default function PointsystemClient() {
     if (filtered.length === 0) return (
       <div className="text-green-700 text-center py-4">No data for {unit} {shift}.</div>
     );
+    const sorted = [...filtered].sort((a, b) => sortDesc ? b.points - a.points : a.points - b.points);
     return (
       <div className="w-full overflow-x-auto">
+        <button
+          className="mb-2 px-3 py-1 bg-green-200 text-green-900 rounded font-semibold hover:bg-green-300 transition"
+          onClick={() => setSortDesc((prev) => !prev)}
+        >
+          Sort by Points: {sortDesc ? 'Highest to Lowest' : 'Lowest to Highest'}
+        </button>
         <table className="w-full min-w-[500px] border border-green-200 rounded-xl overflow-hidden mb-6 text-xs sm:text-sm md:text-base">
           <thead>
             <tr className="bg-green-100">
@@ -56,7 +64,7 @@ export default function PointsystemClient() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p, idx) => (
+            {sorted.map((p, idx) => (
               <tr key={p.id} className={"border-t border-green-100 " + (idx % 2 === 0 ? "bg-green-50" : "bg-white") + " hover:bg-green-200 transition"}>
                 <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-900 font-medium text-xs sm:text-lg whitespace-nowrap">{p.name}</td>
                 <td className="px-2 sm:px-4 py-2 sm:py-3 text-green-800 text-xs sm:text-lg whitespace-nowrap">{p.points}</td>

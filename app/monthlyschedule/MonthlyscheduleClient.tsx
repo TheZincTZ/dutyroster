@@ -89,9 +89,9 @@ export default function MonthlyscheduleClient() {
                             {calendar[date] && (
                               <div className="space-y-1">
                                 <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(calendar[date].AM)}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res AM:</span> <span className="text-red-700">{renderName(calendar[date].ReserveAM)}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-black">Res AM:</span> <span className="text-black">{renderName(calendar[date].ReserveAM)}</span></div>
                                 <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(calendar[date].PM)}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-red-700">Res PM:</span> <span className="text-red-700">{renderName(calendar[date].ReservePM)}</span></div>
+                                <div className="text-xs"><span className="font-semibold text-black">Res PM:</span> <span className="text-black">{renderName(calendar[date].ReservePM)}</span></div>
                               </div>
                             )}
                           </div>

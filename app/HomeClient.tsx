@@ -133,8 +133,8 @@ export default function HomeClient() {
               <span className="text-green-800">{renderName(amEntry)}</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span className="font-semibold text-red-700 min-w-[80px]">Reserve AM:</span>
-              <span className="text-red-700">{renderName(amReserve)}</span>
+              <span className="font-semibold text-black min-w-[80px]">Reserve AM:</span>
+              <span className="text-black">{renderName(amReserve)}</span>
             </div>
           </div>
         </div>
@@ -148,8 +148,8 @@ export default function HomeClient() {
               <span className="text-green-800">{renderName(pmEntry)}</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span className="font-semibold text-red-700 min-w-[80px]">Reserve PM:</span>
-              <span className="text-red-700">{renderName(pmReserve)}</span>
+              <span className="font-semibold text-black min-w-[80px]">Reserve PM:</span>
+              <span className="text-black">{renderName(pmReserve)}</span>
             </div>
           </div>
         </div>
