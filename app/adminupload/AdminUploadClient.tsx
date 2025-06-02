@@ -47,8 +47,7 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
     // Fallback: For the first week, check all columns for the 1st if not found
     if (weekStart === 6 && !calendar[1]) {
-      // Only check row 7 (index 6) and columns 1-8 for the 1st
-      for (let col = 1; col <= 8; col++) {
+      for (let col = 0; col < dateRow.length; col++) {
         const dateCell = dateRow[col];
         if (parseInt(dateCell, 10) === 1) {
           calendar[1] = {
@@ -63,13 +62,22 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
     if (!foundValidDate) break;
   }
+  // Special case: If 1st June is missing, get it from H2-H6
+  if (!calendar[1] && matrix[1]?.[8] && parseInt(matrix[1][8], 10) === 1) {
+    calendar[1] = {
+      AM: matrix[2]?.[8]?.toString().trim() || '',
+      PM: matrix[3]?.[8]?.toString().trim() || '',
+      ReserveAM: matrix[4]?.[8]?.toString().trim() || '',
+      ReservePM: matrix[5]?.[8]?.toString().trim() || '',
+    };
+  }
   return calendar;
 }
 
 function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
   const extras: ExtrasPersonnel[] = [];
-  // Read from F35 to G38 inclusive (rows 34 to 37, columns 5 and 6)
-  for (let row = 34; row <= 37; row++) {
+  // Read from F33 to G38 inclusive (indices 32 to 37, columns 5 and 6)
+  for (let row = 32; row <= 37; row++) {
     const name = matrix[row]?.[5]?.toString().trim(); // Column F
     const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
     if (name) {
@@ -81,7 +89,6 @@ function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
 
 function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
-  
   // Map Excel columns J-M to array indices 9-12
   const COLUMN_MAP = {
     'J': 9,  // Name
@@ -90,8 +97,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     'M': 12  // Average Points
   };
 
-  // Brigade Morning Shift (J3-M14)
-  for (let row = 2; row <= 13; row++) {
+  // Brigade Morning Shift (J2-M14)
+  for (let row = 1; row <= 13; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -105,8 +112,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // Brigade Night Shift (J17-M31)
-  for (let row = 16; row <= 30; row++) {
+  // Brigade Night Shift (J16-M31)
+  for (let row = 15; row <= 30; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -120,22 +127,23 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Morning Shift (J35-M35)
-  const sspMorningRow = 34;
-  const sspMorningName = matrix[sspMorningRow]?.[COLUMN_MAP['J']]?.toString().trim();
-  if (sspMorningName) {
-    points.push({
-      unit: 'ssp',
-      shift: 'morning',
-      name: sspMorningName,
-      points: Number(matrix[sspMorningRow]?.[COLUMN_MAP['K']] || 0),
-      months_valid: Number(matrix[sspMorningRow]?.[COLUMN_MAP['L']] || 0),
-      average_points: Number(matrix[sspMorningRow]?.[COLUMN_MAP['M']] || 0)
-    });
+  // SSP Morning Shift (J34-M35)
+  for (let row = 33; row <= 34; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+    if (name) {
+      points.push({
+        unit: 'ssp',
+        shift: 'morning',
+        name,
+        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+      });
+    }
   }
 
-  // SSP Night Shift (J37-M44)
-  for (let row = 36; row <= 43; row++) {
+  // SSP Night Shift (J36-M44)
+  for (let row = 35; row <= 43; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
