@@ -20,21 +20,23 @@ type PointSystem = {
 
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
-  // Start from row 2 (index 1), then every 5 rows is a week
-  for (let weekStart = 1; weekStart < matrix.length; weekStart += 5) {
+  // Start from the first date row (index 6, which is row 7 in Excel)
+  for (let weekStart = 6; weekStart < matrix.length; weekStart += 5) {
     const dateRow = matrix[weekStart];
     const amRow = matrix[weekStart + 1];
     const pmRow = matrix[weekStart + 2];
     const reserveAmRow = matrix[weekStart + 3];
     const reservePmRow = matrix[weekStart + 4];
 
+    // If any of the rows are missing, skip this week
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
 
+    // Columns 1-7 are Mon-Sun (B-H)
     for (let col = 1; col <= 7; col++) {
       const dateCell = dateRow[col];
-      if (!dateCell) continue;
+      // Only process if the cell is a number (date)
       const dateNum = parseInt(dateCell, 10);
-      if (isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
+      if (!dateCell || isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
 
       calendar[dateNum] = {
         AM: amRow[col]?.toString().trim() || '',
