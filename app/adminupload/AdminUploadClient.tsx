@@ -28,7 +28,6 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     const reserveAmRow = matrix[weekStart + 3];
     const reservePmRow = matrix[weekStart + 4];
 
-    // If any of the rows are missing, skip this week
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
 
     let foundValidDate = false;
@@ -46,7 +45,21 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
         ReservePM: reservePmRow[col]?.toString().trim() || '',
       };
     }
-    // If no valid date was found in this week, stop processing further (likely reached summary/notes)
+    // Fallback: For the first week, check all columns for the 1st if not found
+    if (weekStart === 6 && !calendar[1]) {
+      for (let col = 0; col < dateRow.length; col++) {
+        const dateCell = dateRow[col];
+        if (parseInt(dateCell, 10) === 1) {
+          calendar[1] = {
+            AM: amRow[col]?.toString().trim() || '',
+            PM: pmRow[col]?.toString().trim() || '',
+            ReserveAM: reserveAmRow[col]?.toString().trim() || '',
+            ReservePM: reservePmRow[col]?.toString().trim() || '',
+          };
+          break;
+        }
+      }
+    }
     if (!foundValidDate) break;
   }
   return calendar;
@@ -54,17 +67,14 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
 
 function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
   const extras: ExtrasPersonnel[] = [];
-  
-  // Process rows 35-38 (indices 34-37) for extras personnel
+  // Read from F35 to G38 (indices 34 to 37, columns 5 and 6)
   for (let row = 34; row <= 37; row++) {
     const name = matrix[row]?.[5]?.toString().trim(); // Column F
     const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
-    
     if (name) {
       extras.push({ name, number });
     }
   }
-  
   return extras;
 }
 
