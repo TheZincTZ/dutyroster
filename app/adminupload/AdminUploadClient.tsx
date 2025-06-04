@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/db-access";
 
-const ADMIN_PIN = "7954";
 const MAX_ATTEMPTS = 5;
-const PIN_LOCK_KEY = "adminUploadPinLock";
+
+// Remove hardcoded PIN_LOCK_KEY and use environment variable
+const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY || "adminUploadPinLock";
+
+// Remove hardcoded ADMIN_PIN and use environment variable
+const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "";
 
 type ExtrasPersonnel = { name: string; number: number };
 
@@ -294,7 +298,7 @@ export default function AdminUploadClient() {
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-4">Page Locked</h2>
-          <p className="text-red-600 mb-4">Too many incorrect attempts. Please contact the administrator.</p>
+          <p className="text-red-600 mb-4">Max attempts exceeded. Please contact the administrator.</p>
           <form
             onSubmit={e => {
               e.preventDefault();

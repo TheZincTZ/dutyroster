@@ -116,7 +116,7 @@ export default function HomeClient() {
       <div className="mb-4 sm:mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
         <div className="flex items-start gap-2">
           <span className="text-yellow-700 text-xl">⚠️</span>
-          <p className="text-yellow-800 font-medium">If duty clerk wants to swap duty, please inform OPS WO</p>
+          <p className="text-yellow-800 font-medium">If duty clerk wants to swap duty, please inform OPS WO beforehand.</p>
         </div>
       </div>
 
