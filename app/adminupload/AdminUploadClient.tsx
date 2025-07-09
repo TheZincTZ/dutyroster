@@ -50,13 +50,12 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
 
 function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
   const extras: ExtrasPersonnel[] = [];
-  // Read from F33 to G38 inclusive (indices 32 to 37, columns 5 and 6)
-  for (let row = 32; row <= 37; row++) {
+  // Start at row 36 (index 35), go down until name is empty
+  for (let row = 35; row < matrix.length; row++) {
     const name = matrix[row]?.[5]?.toString().trim(); // Column F
     const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
-    if (name) {
-      extras.push({ name, number });
-    }
+    if (!name) break; // Stop at first empty row
+    extras.push({ name, number });
   }
   return extras;
 }
