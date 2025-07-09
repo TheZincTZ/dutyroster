@@ -35,8 +35,8 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
 
     let foundValidDate = false;
-    // Columns 1-8 are Mon-Sun (B-H)
-    for (let col = 1; col <= 8; col++) {
+    // Columns 1-7 are Mon-Sun (B-H)
+    for (let col = 1; col <= 7; col++) {
       const dateCell = dateRow[col];
       const dateNum = parseInt(dateCell, 10);
       if (!dateCell || isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
@@ -51,7 +51,7 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
     // Fallback: For the first week, check all columns for the 1st if not found
     if (weekStart === 6 && !calendar[1]) {
-      for (let col = 0; col < dateRow.length; col++) {
+      for (let col = 1; col <= 7; col++) {
         const dateCell = dateRow[col];
         if (parseInt(dateCell, 10) === 1) {
           calendar[1] = {
@@ -65,15 +65,6 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
       }
     }
     if (!foundValidDate) break;
-  }
-  // Always set 1st June from H2-H6 if H2 is '1'
-  if (matrix[1]?.[8] && parseInt(matrix[1][8], 10) === 1) {
-    calendar[1] = {
-      AM: matrix[2]?.[8]?.toString().trim() || '',
-      PM: matrix[3]?.[8]?.toString().trim() || '',
-      ReserveAM: matrix[4]?.[8]?.toString().trim() || '',
-      ReservePM: matrix[5]?.[8]?.toString().trim() || '',
-    };
   }
   return calendar;
 }
