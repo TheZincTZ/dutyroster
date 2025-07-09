@@ -24,38 +24,26 @@ type PointSystem = {
 
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
-  for (let row = 0; row < matrix.length - 4; row++) {
-    const dateRow = matrix[row];
-    if (!dateRow) continue;
-    // Check if this is a date row (at least one col 1-7 is a valid date)
-    let isDateRow = false;
-    for (let col = 1; col <= 7; col++) {
-      const dateCell = dateRow[col];
-      const dateNum = parseInt(dateCell, 10);
-      if (dateCell && !isNaN(dateNum) && dateNum >= 1 && dateNum <= 31) {
-        isDateRow = true;
-        break;
-      }
-    }
-    if (!isDateRow) continue;
-    // Map each valid date in columns 1-7
-    const amRow = matrix[row + 1];
-    const pmRow = matrix[row + 2];
-    const reserveAmRow = matrix[row + 3];
-    const reservePmRow = matrix[row + 4];
-    for (let col = 1; col <= 7; col++) {
+  // Week blocks start at rows 1, 6, 11, 16, 21 (0-based)
+  const weekStarts = [1, 6, 11, 16, 21];
+  for (const start of weekStarts) {
+    const dateRow = matrix[start];
+    const amRow = matrix[start + 1];
+    const pmRow = matrix[start + 2];
+    const reserveAmRow = matrix[start + 3];
+    const reservePmRow = matrix[start + 4];
+    if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
+    for (let col = 1; col <= 7; col++) { // B-H, 1-7
       const dateCell = dateRow[col];
       const dateNum = parseInt(dateCell, 10);
       if (!dateCell || isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
       calendar[dateNum] = {
-        AM: amRow?.[col]?.toString().trim() || '',
-        PM: pmRow?.[col]?.toString().trim() || '',
-        ReserveAM: reserveAmRow?.[col]?.toString().trim() || '',
-        ReservePM: reservePmRow?.[col]?.toString().trim() || '',
+        AM: amRow[col]?.toString().trim() || '',
+        PM: pmRow[col]?.toString().trim() || '',
+        ReserveAM: reserveAmRow[col]?.toString().trim() || '',
+        ReservePM: reservePmRow[col]?.toString().trim() || '',
       };
     }
-    // Skip ahead to next possible week block
-    row += 4;
   }
   return calendar;
 }
