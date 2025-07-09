@@ -24,18 +24,16 @@ type PointSystem = {
 
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
-  // Start from the first date row (index 6, which is row 7 in Excel)
+  // Each week block is 5 rows: date, AM, PM, ResAM, ResPM
+  // Columns: 1=Mon, 2=Tue, ..., 7=Sun (ignore 0)
   for (let weekStart = 6; weekStart + 4 < matrix.length; weekStart += 5) {
     const dateRow = matrix[weekStart];
     const amRow = matrix[weekStart + 1];
     const pmRow = matrix[weekStart + 2];
     const reserveAmRow = matrix[weekStart + 3];
     const reservePmRow = matrix[weekStart + 4];
-
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
-
-    // Columns 1-7 are Mon-Sun (B-H)
-    for (let col = 1; col <= 7; col++) {
+    for (let col = 1; col <= 7; col++) { // 1=Mon, ..., 7=Sun
       const dateCell = dateRow[col];
       const dateNum = parseInt(dateCell, 10);
       if (!dateCell || isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
@@ -46,22 +44,6 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
         ReservePM: reservePmRow[col]?.toString().trim() || '',
       };
     }
-    // Fallback: For the first week, check all columns for the 1st if not found
-    if (weekStart === 6 && !calendar[1]) {
-      for (let col = 1; col <= 7; col++) {
-        const dateCell = dateRow[col];
-        if (parseInt(dateCell, 10) === 1) {
-          calendar[1] = {
-            AM: amRow[col]?.toString().trim() || '',
-            PM: pmRow[col]?.toString().trim() || '',
-            ReserveAM: reserveAmRow[col]?.toString().trim() || '',
-            ReservePM: reservePmRow[col]?.toString().trim() || '',
-          };
-          break;
-        }
-      }
-    }
-    // Do NOT break if no valid date found; continue to next week block
   }
   return calendar;
 }
