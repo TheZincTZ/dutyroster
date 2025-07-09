@@ -64,8 +64,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
   const COLUMN_MAP = { 'J': 9, 'K': 10, 'L': 11, 'M': 12 };
 
-  // Brigade Morning Shift (J3-M13, rows 2–12)
-  for (let row = 2; row <= 12; row++) {
+  // Brigade Morning Shift (J3-M14, rows 2–13)
+  for (let row = 2; row <= 13; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -110,8 +110,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Night Shift (J39-M45, rows 38–44)
-  for (let row = 38; row <= 44; row++) {
+  // SSP Night Shift (J38-M45, rows 37–44)
+  for (let row = 37; row <= 44; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
