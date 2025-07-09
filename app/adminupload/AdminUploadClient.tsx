@@ -277,7 +277,6 @@ export default function AdminUploadClient() {
   };
 
   // Build 5-week calendar grid always starting from Sunday
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
   const firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sun, 1=Mon, ...
   
