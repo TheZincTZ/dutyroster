@@ -276,13 +276,14 @@ export default function AdminUploadClient() {
     }
   };
 
-  // Build 5-week calendar grid always starting from Sunday
+  // Build 5-week calendar grid always starting from Monday
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
   const firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sun, 1=Mon, ...
   
-  // Calculate the Sunday that starts the first week of the month
+  // Calculate the Monday that starts the first week of the month
   const startDate = new Date(firstDayOfMonth);
-  startDate.setDate(startDate.getDate() - firstDayOfWeek);
+  const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert Sunday=0 to Monday=0
+  startDate.setDate(startDate.getDate() - daysToSubtract);
   
   type DayInfo = { date: number; isCurrentMonth: boolean; month: number; year: number };
   const weeks: DayInfo[][] = [];
@@ -420,7 +421,7 @@ export default function AdminUploadClient() {
               <table className="min-w-full bg-white border border-green-300 rounded-xl">
                 <thead>
                   <tr>
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
                       <th key={idx} className="px-4 py-3 border bg-green-100 text-green-700 font-semibold">
                         {day}
                       </th>
