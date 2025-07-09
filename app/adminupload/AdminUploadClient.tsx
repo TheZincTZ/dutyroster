@@ -62,16 +62,10 @@ function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
 
 function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
-  // Map Excel columns J-M to array indices 9-12
-  const COLUMN_MAP = {
-    'J': 9,  // Name
-    'K': 10, // Points
-    'L': 11, // Months Valid
-    'M': 12  // Average Points
-  };
+  const COLUMN_MAP = { 'J': 9, 'K': 10, 'L': 11, 'M': 12 };
 
-  // Brigade Morning Shift (J2-M14)
-  for (let row = 1; row <= 13; row++) {
+  // Brigade Morning Shift (J3-M13, rows 2–12)
+  for (let row = 2; row <= 12; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -85,8 +79,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // Brigade Night Shift (J16-M31)
-  for (let row = 15; row <= 30; row++) {
+  // Brigade Night Shift (J17-M32, rows 16–31)
+  for (let row = 16; row <= 31; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -100,8 +94,9 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Morning Shift (J34-M35)
-  for (let row = 33; row <= 34; row++) {
+  // SSP Morning Shift (J36-M36, row 35)
+  {
+    const row = 35;
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
@@ -115,8 +110,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Night Shift (J36-M44)
-  for (let row = 35; row <= 43; row++) {
+  // SSP Night Shift (J39-M45, rows 38–44)
+  for (let row = 38; row <= 44; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
