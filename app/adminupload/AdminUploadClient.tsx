@@ -276,21 +276,35 @@ export default function AdminUploadClient() {
     }
   };
 
-  // Build current month calendar grid
+  // Build 5-week calendar grid always starting from Sunday
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun, 1=Mon, ...
-  const weeks: number[][] = [];
-  let week: number[] = Array(firstDayOfWeek).fill(0);
-  for (let d = 1; d <= daysInMonth; d++) {
-    week.push(d);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sun, 1=Mon, ...
+  
+  // Calculate the Sunday that starts the first week of the month
+  const startDate = new Date(firstDayOfMonth);
+  startDate.setDate(startDate.getDate() - firstDayOfWeek);
+  
+  type DayInfo = { date: number; isCurrentMonth: boolean; month: number; year: number };
+  const weeks: DayInfo[][] = [];
+  
+  // Generate 5 weeks
+  for (let week = 0; week < 5; week++) {
+    const weekData: DayInfo[] = [];
+    
+    for (let day = 0; day < 7; day++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + (week * 7) + day);
+      
+      weekData.push({
+        date: currentDate.getDate(),
+        isCurrentMonth: currentDate.getMonth() === currentMonth,
+        month: currentDate.getMonth(),
+        year: currentDate.getFullYear()
+      });
     }
-  }
-  if (week.length) {
-    while (week.length < 7) week.push(0);
-    weeks.push(week);
+    
+    weeks.push(weekData);
   }
 
   if (locked) {
@@ -415,41 +429,43 @@ export default function AdminUploadClient() {
                   </tr>
                 </thead>
                 <tbody>
-                  {weeks.map((week, wIdx) => (
-                    <tr key={wIdx}>
-                      {week.map((date, dIdx) => (
-                        <td key={dIdx} className="align-top px-4 py-3 border min-w-[180px] bg-green-50 hover:bg-green-100 transition">
-                          {date > 0 ? (
-                            <div>
-                              <div className="font-bold text-green-700 mb-2 text-lg">{date}</div>
-                              {calendar[date] && (
-                                <div className="space-y-2">
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-green-700">AM:</div>
-                                    <div className="text-green-800 text-sm">{renderName(calendar[date].AM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-black">Reserve AM:</div>
-                                    <div className="text-black text-sm">{renderName(calendar[date].ReserveAM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-green-700">PM:</div>
-                                    <div className="text-green-800 text-sm">{renderName(calendar[date].PM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-black">Reserve PM:</div>
-                                    <div className="text-black text-sm">{renderName(calendar[date].ReservePM)}</div>
-                                  </div>
-                                </div>
-                              )}
+                                  {weeks.map((week, wIdx) => (
+                  <tr key={wIdx}>
+                    {week.map((dayInfo, dIdx) => (
+                      <td key={dIdx} className={`align-top px-4 py-3 border min-w-[180px] transition ${
+                        dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
+                      }`}>
+                        <div>
+                          <div className={`font-bold mb-2 text-lg ${
+                            dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
+                          }`}>
+                            {dayInfo.date}
+                          </div>
+                          {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
+                            <div className="space-y-2">
+                              <div className="bg-white p-2 rounded shadow-sm">
+                                <div className="font-semibold text-green-700">AM:</div>
+                                <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].AM)}</div>
+                              </div>
+                              <div className="bg-white p-2 rounded shadow-sm">
+                                <div className="font-semibold text-black">Reserve AM:</div>
+                                <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReserveAM)}</div>
+                              </div>
+                              <div className="bg-white p-2 rounded shadow-sm">
+                                <div className="font-semibold text-green-700">PM:</div>
+                                <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].PM)}</div>
+                              </div>
+                              <div className="bg-white p-2 rounded shadow-sm">
+                                <div className="font-semibold text-black">Reserve PM:</div>
+                                <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReservePM)}</div>
+                              </div>
                             </div>
-                          ) : (
-                            <div className="text-green-200 text-center">—</div>
                           )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
                 </tbody>
               </table>
             </div>

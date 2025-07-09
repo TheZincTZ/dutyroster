@@ -104,7 +104,7 @@ export default function SearchClient() {
         extractNamesWithExtra(cell).forEach(({ name, isExtra }) => {
           if (name === searchName) {
             duties.push({ date: day.date, shift, type, isExtra });
-          }
+      }
         });
       };
       check(am, "AM", "Primary");

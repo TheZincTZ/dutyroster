@@ -29,21 +29,35 @@ export default function MonthlyscheduleClient() {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
   
-  // Get days in current month
+  // Build 5-week calendar grid always starting from Sunday
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun, 1=Mon, ...
-  const weeks: number[][] = [];
-  let week: number[] = Array(firstDayOfWeek).fill(0);
-  for (let d = 1; d <= daysInMonth; d++) {
-    week.push(d);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sun, 1=Mon, ...
+  
+  // Calculate the Sunday that starts the first week of the month
+  const startDate = new Date(firstDayOfMonth);
+  startDate.setDate(startDate.getDate() - firstDayOfWeek);
+  
+  type DayInfo = { date: number; isCurrentMonth: boolean; month: number; year: number };
+  const weeks: DayInfo[][] = [];
+  
+  // Generate 5 weeks
+  for (let week = 0; week < 5; week++) {
+    const weekData: DayInfo[] = [];
+    
+    for (let day = 0; day < 7; day++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + (week * 7) + day);
+      
+      weekData.push({
+        date: currentDate.getDate(),
+        isCurrentMonth: currentDate.getMonth() === currentMonth,
+        month: currentDate.getMonth(),
+        year: currentDate.getFullYear()
+      });
     }
-  }
-  if (week.length) {
-    while (week.length < 7) week.push(0);
-    weeks.push(week);
+    
+    weeks.push(weekData);
   }
 
   // Format month name
@@ -81,23 +95,25 @@ export default function MonthlyscheduleClient() {
               <tbody>
                 {weeks.map((week, wIdx) => (
                   <tr key={wIdx}>
-                    {week.map((date, dIdx) => (
-                      <td key={dIdx} className="align-top px-1 sm:px-2 py-2 border min-w-[90px] sm:min-w-[120px] bg-green-50 hover:bg-green-100 transition">
-                        {date > 0 ? (
-                          <div>
-                            <div className="font-bold text-green-700 mb-1 text-xs sm:text-lg">{date}</div>
-                            {calendar[date] && (
-                              <div className="space-y-1">
-                                <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(calendar[date].AM)}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-black">Res AM:</span> <span className="text-black">{renderName(calendar[date].ReserveAM)}</span></div>
-                                <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(calendar[date].PM)}</span></div>
-                                <div className="text-xs"><span className="font-semibold text-black">Res PM:</span> <span className="text-black">{renderName(calendar[date].ReservePM)}</span></div>
-                              </div>
-                            )}
+                    {week.map((dayInfo, dIdx) => (
+                      <td key={dIdx} className={`align-top px-1 sm:px-2 py-2 border min-w-[90px] sm:min-w-[120px] transition ${
+                        dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
+                      }`}>
+                        <div>
+                          <div className={`font-bold mb-1 text-xs sm:text-lg ${
+                            dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
+                          }`}>
+                            {dayInfo.date}
                           </div>
-                        ) : (
-                          <div className="text-green-200 text-center">—</div>
-                        )}
+                          {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
+                            <div className="space-y-1">
+                              <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(calendar[dayInfo.date].AM)}</span></div>
+                              <div className="text-xs"><span className="font-semibold text-black">Res AM:</span> <span className="text-black">{renderName(calendar[dayInfo.date].ReserveAM)}</span></div>
+                              <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(calendar[dayInfo.date].PM)}</span></div>
+                              <div className="text-xs"><span className="font-semibold text-black">Res PM:</span> <span className="text-black">{renderName(calendar[dayInfo.date].ReservePM)}</span></div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     ))}
                   </tr>
