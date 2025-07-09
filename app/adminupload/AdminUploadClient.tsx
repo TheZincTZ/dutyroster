@@ -34,14 +34,11 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
 
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
 
-    let foundValidDate = false;
     // Columns 1-7 are Mon-Sun (B-H)
     for (let col = 1; col <= 7; col++) {
       const dateCell = dateRow[col];
       const dateNum = parseInt(dateCell, 10);
       if (!dateCell || isNaN(dateNum) || dateNum < 1 || dateNum > 31) continue;
-
-      foundValidDate = true;
       calendar[dateNum] = {
         AM: amRow[col]?.toString().trim() || '',
         PM: pmRow[col]?.toString().trim() || '',
@@ -64,7 +61,7 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
         }
       }
     }
-    if (!foundValidDate) break;
+    // Do NOT break if no valid date found; continue to next week block
   }
   return calendar;
 }
