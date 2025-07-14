@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -41,12 +42,12 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
           </div>
 
           <div className="space-y-4">
-            <a
+            <Link
               href="/"
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors block text-center"
             >
               Go to Login Page
-            </a>
+            </Link>
           </div>
 
           <div className="mt-6 text-center">
