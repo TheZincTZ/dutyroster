@@ -98,10 +98,22 @@ export default function PointsystemClient() {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
-            Point System
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+              <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+              Point System
+            </h1>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('dutyRosterAuthenticated');
+                window.location.href = '/';
+              }}
+              className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+              title="Logout"
+            >
+              🔒 Logout
+            </button>
+          </div>
           <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
         {loading ? (

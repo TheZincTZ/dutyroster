@@ -9,6 +9,18 @@ export default function HomeClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [showPin, setShowPin] = useState(false);
+
+  // Check if already authenticated (stored in sessionStorage)
+  useEffect(() => {
+    const authenticated = sessionStorage.getItem('dutyRosterAuthenticated');
+    if (authenticated === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Load data from Supabase
   useEffect(() => {
@@ -54,6 +66,83 @@ export default function HomeClient() {
     };
   }, []);
 
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPin = process.env.NEXT_PUBLIC_DUTY_ROSTER_PIN ;
+    
+    if (pin === correctPin) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('dutyRosterAuthenticated', 'true');
+      setPinError("");
+      setPin("");
+    } else {
+      setPinError("Incorrect PIN. Please try again.");
+      setPin("");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('dutyRosterAuthenticated');
+  };
+
+  // PIN Entry Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-green-100">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-green-900 tracking-tight mb-2">
+            Duty Roster
+          </h1>
+          <p className="text-green-700">Enter PIN to access the duty roster</p>
+        </div>
+
+        <form onSubmit={handlePinSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="pin" className="block text-sm font-medium text-green-700 mb-2">
+              PIN Code
+            </label>
+            <div className="relative">
+              <input
+                type={showPin ? "text" : "password"}
+                id="pin"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg font-mono"
+                placeholder="Enter PIN"
+                maxLength={10}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 hover:text-green-800"
+              >
+                {showPin ? "🙈" : "👁️"}
+              </button>
+            </div>
+            {pinError && (
+              <p className="mt-2 text-red-600 text-sm">{pinError}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+          >
+            Access Duty Roster
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Contact administrator for PIN access
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Get the current date's personnel data
   const currentDate = now.getDate();
   const amEntry = calendar[currentDate]?.AM || "";
@@ -74,10 +163,19 @@ export default function HomeClient() {
     <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-          <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
-          Duty Roster
-        </h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+            Duty Roster
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+            title="Logout"
+          >
+            🔒 Logout
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
           <Link 
             href="/search" 
