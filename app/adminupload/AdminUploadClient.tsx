@@ -6,10 +6,10 @@ import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, 
 const MAX_ATTEMPTS = 5;
 
 // Remove hardcoded PIN_LOCK_KEY and use environment variable
-const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY ;
+const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY || "";
 
 // Remove hardcoded ADMIN_PIN and use environment variable
-const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN ;
+const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "";
 
 type ExtrasPersonnel = { name: string; number: number };
 
@@ -281,7 +281,7 @@ export default function AdminUploadClient() {
             onSubmit={e => {
               e.preventDefault();
               if (unlockPassword === UNLOCK_PASSWORD) {
-                localStorage.removeItem("adminUploadPinLock");
+                localStorage.removeItem(PIN_LOCK_KEY);
                 window.location.reload();
               } else {
                 setUnlockError("Incorrect unlock password.");
