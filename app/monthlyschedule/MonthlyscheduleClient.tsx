@@ -41,7 +41,7 @@ export default function MonthlyscheduleClient() {
       }
     };
     loadData();
-  }, []);
+  }, [currentMonth, currentYear]);
 
   // Load calendar data when selected month changes
   useEffect(() => {

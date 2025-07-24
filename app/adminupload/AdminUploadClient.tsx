@@ -211,7 +211,6 @@ export default function AdminUploadClient() {
   const [isLocked, setIsLocked] = useState(true);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
-  const [showPin, setShowPin] = useState(false);
   const [pinAttempts, setPinAttempts] = useState(0);
   const [authenticated, setAuthenticated] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState("");
@@ -225,17 +224,6 @@ export default function AdminUploadClient() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-
-  // Check if admin is locked
-  useEffect(() => {
-    const lockState = localStorage.getItem(PIN_LOCK_KEY);
-    if (lockState === "true") {
-      setIsLocked(true);
-    } else {
-      setIsLocked(false);
-      loadData();
-    }
-  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -263,12 +251,23 @@ export default function AdminUploadClient() {
     }
   };
 
+  // Check if admin is locked
+  useEffect(() => {
+    const lockState = localStorage.getItem(PIN_LOCK_KEY);
+    if (lockState === "true") {
+      setIsLocked(true);
+    } else {
+      setIsLocked(false);
+      loadData();
+    }
+  }, []);
+
   // Load data when selected month changes
   useEffect(() => {
     if (selectedMonth && !isLocked) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, isLocked]);
 
   const loadCalendarForMonth = async (month: number, year: number) => {
     try {
