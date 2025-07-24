@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData } from "../lib/db-access";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
+import Link from "next/link";
 
 const MAX_ATTEMPTS = 5;
 
@@ -21,6 +22,72 @@ type PointSystem = {
   months_valid: number;
   average_points: number;
 };
+
+// Function to extract month and year from A1-2
+function extractMonthYear(matrix: string[][]): { month: number; year: number } | null {
+  try {
+    // Check A1 (index 0,0) and A2 (index 1,0) for month/year information
+    const a1 = matrix[0]?.[0]?.toString().trim() || '';
+    const a2 = matrix[1]?.[0]?.toString().trim() || '';
+    
+    // Try to parse month/year from A1 or A2
+    const monthNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december'
+    ];
+    
+    // Check A1 first, then A2
+    const textToCheck = [a1, a2];
+    
+    for (const text of textToCheck) {
+      if (!text) continue;
+      
+      const lowerText = text.toLowerCase();
+      
+      // Look for month name and year pattern
+      for (let i = 0; i < monthNames.length; i++) {
+        const monthName = monthNames[i];
+        if (lowerText.includes(monthName)) {
+          // Extract year (4-digit number)
+          const yearMatch = text.match(/\b(20\d{2})\b/);
+          if (yearMatch) {
+            return {
+              month: i + 1, // Convert to 1-based month
+              year: parseInt(yearMatch[1], 10)
+            };
+          }
+        }
+      }
+      
+      // Also try to parse "MONTH YEAR" format (e.g., "JUNE 2025")
+      const monthYearMatch = lowerText.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/);
+      if (monthYearMatch) {
+        const monthIndex = monthNames.indexOf(monthYearMatch[1]);
+        if (monthIndex !== -1) {
+          return {
+            month: monthIndex + 1,
+            year: parseInt(monthYearMatch[2], 10)
+          };
+        }
+      }
+    }
+    
+    // If no month/year found, return current month/year as fallback
+    const now = new Date();
+    return {
+      month: now.getMonth() + 1,
+      year: now.getFullYear()
+    };
+  } catch (error) {
+    console.error('Error extracting month/year:', error);
+    // Return current month/year as fallback
+    const now = new Date();
+    return {
+      month: now.getMonth() + 1,
+      year: now.getFullYear()
+    };
+  }
+}
 
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
@@ -138,63 +205,100 @@ function renderName(name: string) {
 
 export default function AdminUploadClient() {
   const [calendar, setCalendar] = useState<CalendarMap>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(true);
   const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinError, setPinError] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [pinAttempts, setPinAttempts] = useState(0);
-  const [locked, setLocked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
+
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
-  // Get current month and year
+  // Get current month and year for display
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
-  // Load from Edge Config on mount
+  // Check if admin is locked
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const calendarData = await getRosterData();
-        if (Object.keys(calendarData).length > 0) {
-          setCalendar(calendarData);
-        }
-      } catch (err) {
-        console.error('Error loading data:', err);
-      }
-    };
-    
-    loadData();
-    
-    // Check lock state
     const lockState = localStorage.getItem(PIN_LOCK_KEY);
-    if (lockState === "locked") {
-      setLocked(true);
+    if (lockState === "true") {
+      setIsLocked(true);
+    } else {
+      setIsLocked(false);
+      loadData();
     }
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Load available months
+      const months = await getAvailableMonths();
+      setAvailableMonths(months);
+      
+      // Set selected month to current month if available, otherwise to the most recent month
+      if (months.length > 0) {
+        const currentMonthData = months.find(m => m.month === currentMonth + 1 && m.year === currentYear);
+        setSelectedMonth(currentMonthData ? { month: currentMonthData.month, year: currentMonthData.year } : { month: months[0].month, year: months[0].year });
+      }
+      
+      // Load calendar data for selected month
+      if (selectedMonth) {
+        const calendarData = await getRosterData(selectedMonth.month, selectedMonth.year);
+        setCalendar(calendarData);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data when selected month changes
+  useEffect(() => {
+    if (selectedMonth && !isLocked) {
+      loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
+    }
+  }, [selectedMonth]);
+
+  const loadCalendarForMonth = async (month: number, year: number) => {
+    try {
+      const calendarData = await getRosterData(month, year);
+      setCalendar(calendarData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load calendar data");
+    }
+  };
 
   // Lock if attempts exceeded
   useEffect(() => {
     if (pinAttempts >= MAX_ATTEMPTS) {
-      setLocked(true);
-      localStorage.setItem(PIN_LOCK_KEY, "locked");
+      setIsLocked(true);
+      localStorage.setItem(PIN_LOCK_KEY, "true");
     }
   }, [pinAttempts]);
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (locked) return;
+    if (isLocked) return;
     if (pin === ADMIN_PIN) {
       setAuthenticated(true);
-      setPinError(null);
+      setPinError("");
+      setIsLocked(false);
+      localStorage.removeItem(PIN_LOCK_KEY);
+      loadData();
     } else {
       setPinError("Incorrect PIN");
-      setPinAttempts((a) => a + 1);
+      setPinAttempts((a: number) => a + 1);
       setPin("");
     }
   };
@@ -215,10 +319,16 @@ export default function AdminUploadClient() {
       if (!response.ok) throw new Error("Failed to upload file");
       const result = await response.json();
       
+      // Extract month and year from A1-2
+      const monthYear = extractMonthYear(result.data);
+      if (!monthYear) {
+        throw new Error("Could not extract month and year from Excel file");
+      }
+      
       // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
       setCalendar(newCalendar);
-      await storeRosterData(newCalendar);
+      await storeRosterData(newCalendar, monthYear.month, monthYear.year);
 
       // Process and store extras personnel data
       const extrasPersonnel = getExtrasPersonnelData(result.data);
@@ -232,12 +342,25 @@ export default function AdminUploadClient() {
         await storePointSystemsData(pointSystems);
       }
 
-      setSuccess("File uploaded successfully! Schedule has been updated.");
+      // Refresh available months and set selected month to the uploaded month
+      const months = await getAvailableMonths();
+      setAvailableMonths(months);
+      setSelectedMonth({ month: monthYear.month, year: monthYear.year });
+
+      setSuccess(`File uploaded successfully! Schedule for ${getMonthName(monthYear.month)} ${monthYear.year} has been updated.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
+  };
+
+  const getMonthName = (month: number): string => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[month - 1] || 'Unknown';
   };
 
   // Build 5-week calendar grid always starting from Monday
@@ -271,7 +394,7 @@ export default function AdminUploadClient() {
     weeks.push(weekData);
   }
 
-  if (locked) {
+  if (isLocked) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-green-50">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
@@ -323,14 +446,14 @@ export default function AdminUploadClient() {
             onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ""))}
             className="w-full mb-4 px-4 py-2 border border-green-300 rounded text-lg text-center focus:outline-none focus:ring-2 focus:ring-green-400"
             placeholder="Enter 4-digit PIN"
-            disabled={locked}
+            disabled={isLocked}
             autoFocus
           />
           {pinError && <div className="text-red-600 mb-2 text-center">{pinError}</div>}
           <button
             type="submit"
             className="w-full bg-green-700 text-white py-2 rounded font-semibold hover:bg-green-800 transition"
-            disabled={locked || pin.length !== 4}
+            disabled={isLocked || pin.length !== 4}
           >
             Unlock
           </button>
@@ -343,96 +466,150 @@ export default function AdminUploadClient() {
   }
 
   return (
-    <main className="min-h-screen p-8 bg-green-50">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-green-800">Admin: Upload {monthName} {currentYear} Duty Roster</h1>
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
-          <label className="block text-sm font-medium text-green-700 mb-2">
-            Upload Duty Roster File
-          </label>
+    <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
+      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+              <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+              Admin Upload
+            </h1>
+            <button
+              onClick={() => {
+                localStorage.setItem(PIN_LOCK_KEY, "true");
+                window.location.reload();
+              }}
+              className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+              title="Lock Admin"
+            >
+              🔒 Lock
+            </button>
+          </div>
+          <Link 
+            href="/" 
+            className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center"
+          >
+            Back to Roster
+          </Link>
+        </div>
+
+        {/* Month Selector */}
+        {availableMonths.length > 0 && (
+          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-800 mb-3">Select Month to View:</h3>
+            <div className="flex flex-wrap gap-2">
+              {availableMonths.map((monthData) => (
+                <button
+                  key={`${monthData.year}-${monthData.month}`}
+                  onClick={() => setSelectedMonth({ month: monthData.month, year: monthData.year })}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedMonth?.month === monthData.month && selectedMonth?.year === monthData.year
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+                  }`}
+                >
+                  {monthData.monthName}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* File Upload Section */}
+        <div className="mb-6 p-6 bg-green-50 rounded-xl border-2 border-dashed border-green-300">
+          <h3 className="text-xl font-bold text-green-800 mb-4">Upload Excel File</h3>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls"
             onChange={handleFileUpload}
-            className="block w-full text-sm text-green-700
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-green-50 file:text-green-700
-              hover:file:bg-green-100"
+            className="w-full p-3 border border-green-300 rounded-lg bg-white"
+            disabled={loading}
           />
-        </div>
-        {loading && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mx-auto"></div>
-            <p className="mt-2 text-green-700">Processing file and updating database...</p>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-8">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-8">
-            {success}
-          </div>
-        )}
-        {Object.keys(calendar).length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-green-800 mb-6">Current Schedule</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-green-300 rounded-xl">
-                <thead>
-                  <tr>
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
-                      <th key={idx} className="px-4 py-3 border bg-green-100 text-green-700 font-semibold">
-                        {day}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                                  {weeks.map((week, wIdx) => (
-                  <tr key={wIdx}>
-                    {week.map((dayInfo, dIdx) => (
-                      <td key={dIdx} className={`align-top px-4 py-3 border min-w-[180px] transition ${
-                        dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
-                      }`}>
-                        <div>
-                          <div className={`font-bold mb-2 text-lg ${
-                            dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
-                          }`}>
-                            {dayInfo.date}
-                          </div>
-                          {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
-                            <div className="space-y-2">
-                              <div className="bg-white p-2 rounded shadow-sm">
-                                <div className="font-semibold text-green-700">AM:</div>
-                                <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].AM)}</div>
-                              </div>
-                              <div className="bg-white p-2 rounded shadow-sm">
-                                <div className="font-semibold text-black">Reserve AM:</div>
-                                <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReserveAM)}</div>
-                              </div>
-                              <div className="bg-white p-2 rounded shadow-sm">
-                                <div className="font-semibold text-green-700">PM:</div>
-                                <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].PM)}</div>
-                              </div>
-                              <div className="bg-white p-2 rounded shadow-sm">
-                                <div className="font-semibold text-black">Reserve PM:</div>
-                                <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReservePM)}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                </tbody>
-              </table>
+          {loading && (
+            <div className="mt-4 text-center text-green-700">
+              <span className="text-2xl animate-spin">🌀</span> Processing...
             </div>
+          )}
+          {error && (
+            <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700">
+              {success}
+            </div>
+          )}
+        </div>
+
+        {/* Calendar Preview */}
+        {selectedMonth && (
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-green-800 mb-4">
+              Calendar Preview - {getMonthName(selectedMonth.month)} {selectedMonth.year}
+            </h3>
+            {loading ? (
+              <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2 py-8">
+                <span className="text-3xl animate-spin">🌀</span>
+                Loading calendar...
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-green-300 bg-white rounded-lg overflow-hidden shadow-lg">
+                  <thead>
+                    <tr className="bg-green-600 text-white">
+                      <th className="p-3 text-center font-bold">Mon</th>
+                      <th className="p-3 text-center font-bold">Tue</th>
+                      <th className="p-3 text-center font-bold">Wed</th>
+                      <th className="p-3 text-center font-bold">Thu</th>
+                      <th className="p-3 text-center font-bold">Fri</th>
+                      <th className="p-3 text-center font-bold">Sat</th>
+                      <th className="p-3 text-center font-bold">Sun</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeks.map((week, wIdx) => (
+                      <tr key={wIdx}>
+                        {week.map((dayInfo, dIdx) => (
+                          <td key={dIdx} className={`align-top px-4 py-3 border min-w-[180px] transition ${
+                            dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
+                          }`}>
+                            <div>
+                              <div className={`font-bold mb-2 text-lg ${
+                                dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
+                              }`}>
+                                {dayInfo.date}
+                              </div>
+                              {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
+                                <div className="space-y-2">
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-green-700">AM:</div>
+                                    <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].AM)}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-black">Reserve AM:</div>
+                                    <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReserveAM)}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-green-700">PM:</div>
+                                    <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].PM)}</div>
+                                  </div>
+                                  <div className="bg-white p-2 rounded shadow-sm">
+                                    <div className="font-semibold text-black">Reserve PM:</div>
+                                    <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReservePM)}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

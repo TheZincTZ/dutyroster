@@ -18,7 +18,12 @@ export default function TodayTomorrowClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const calendarData = await getRosterData();
+        // Get current month and year
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // Convert to 1-based month
+        const currentYear = now.getFullYear();
+        
+        const calendarData = await getRosterData(currentMonth, currentYear);
         setCalendar(calendarData);
       } catch {
         setError("Failed to load duty roster");
@@ -45,10 +50,10 @@ export default function TodayTomorrowClient() {
       <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 border border-green-100">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-              <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
-              Today&rsquo;s &amp; Tomorrow&rsquo;s Duty
-            </h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+            Today&rsquo;s &amp; Tomorrow&rsquo;s Duty
+          </h1>
             <button
               onClick={() => {
                 sessionStorage.removeItem('dutyRosterAuthenticated');

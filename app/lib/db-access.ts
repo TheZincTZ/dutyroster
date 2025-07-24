@@ -37,12 +37,14 @@ export type CalendarEntry = {
 export type CalendarMap = { [date: string]: CalendarEntry };
 
 // Write operations - only accessible from admin upload page
-export async function storeRosterData(calendarData: CalendarMap) {
+export async function storeRosterData(calendarData: CalendarMap, month: number, year: number) {
   const { error } = await adminClient
     .from('roster_data')
     .upsert(
       Object.entries(calendarData).map(([date, entry]) => ({
         date: date,
+        month: month,
+        year: year,
         am: entry.AM,
         pm: entry.PM,
         reserve_am: entry.ReserveAM,
@@ -79,11 +81,18 @@ export async function storePointSystemsData(points: { unit: string, shift: strin
 }
 
 // Read operations - accessible from all pages
-export async function getRosterData(): Promise<CalendarMap> {
-  const { data, error } = await readOnlyClient
+export async function getRosterData(month?: number, year?: number): Promise<CalendarMap> {
+  let query = readOnlyClient
     .from('roster_data')
     .select('*')
     .order('date');
+
+  // If month and year are provided, filter by them
+  if (month !== undefined && year !== undefined) {
+    query = query.eq('month', month).eq('year', year);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching roster data:', error);
@@ -101,6 +110,41 @@ export async function getRosterData(): Promise<CalendarMap> {
   });
 
   return calendarMap;
+}
+
+// New function to get available months from the database
+export async function getAvailableMonths(): Promise<{ month: number; year: number; monthName: string }[]> {
+  const { data, error } = await readOnlyClient
+    .from('roster_data')
+    .select('month, year')
+    .order('year', { ascending: false })
+    .order('month', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching available months:', error);
+    throw error;
+  }
+
+  // Get unique month/year combinations
+  const uniqueMonths = new Map<string, { month: number; year: number }>();
+  data.forEach((row) => {
+    const key = `${row.year}-${row.month}`;
+    if (!uniqueMonths.has(key)) {
+      uniqueMonths.set(key, { month: row.month, year: row.year });
+    }
+  });
+
+  // Convert to array and add month names
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  return Array.from(uniqueMonths.values()).map(({ month, year }) => ({
+    month,
+    year,
+    monthName: `${monthNames[month - 1]} ${year}`
+  }));
 }
 
 export async function getExtrasPersonnel() {

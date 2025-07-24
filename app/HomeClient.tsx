@@ -28,7 +28,12 @@ export default function HomeClient() {
     
     const loadData = async () => {
       try {
-        const calendarData = await getRosterData();
+        // Get current month and year
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // Convert to 1-based month
+        const currentYear = now.getFullYear();
+        
+        const calendarData = await getRosterData(currentMonth, currentYear);
         if (isMounted) {
           setCalendar(calendarData);
         }

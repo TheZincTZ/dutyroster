@@ -50,7 +50,16 @@ export default function SearchClient() {
     const fetchRoster = async () => {
       setError(null);
       try {
-        const { data, error } = await supabase.from("roster_data").select("*");
+        // Get current month and year
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // Convert to 1-based month
+        const currentYear = now.getFullYear();
+        
+        const { data, error } = await supabase
+          .from("roster_data")
+          .select("*")
+          .eq('month', currentMonth)
+          .eq('year', currentYear);
         if (error) throw error;
         setRosterData(data || []);
         // Extract all unique names from all fields
@@ -127,10 +136,10 @@ export default function SearchClient() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-              <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
-              Search Personnel
-            </h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+            Search Personnel
+          </h1>
             <button
               onClick={() => {
                 sessionStorage.removeItem('dutyRosterAuthenticated');
