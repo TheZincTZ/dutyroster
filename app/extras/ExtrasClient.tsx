@@ -19,18 +19,14 @@ export default function ExtrasClient() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const monthNames = [
-    'january', 'february', 'march', 'april', 'may', 'june',
-    'july', 'august', 'september', 'october', 'november', 'december'
-  ];
-  const currentMonthName = monthNames[currentMonth];
+  const currentMonthNumber = currentMonth + 1; // Convert to 1-based month
 
   useEffect(() => {
     const fetchExtras = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getExtrasPersonnel(currentMonthName, currentYear);
+        const data = await getExtrasPersonnel(currentMonthNumber, currentYear);
         setExtras(data || []);
       } catch {
         setError("Failed to load extras personnel");
@@ -39,7 +35,7 @@ export default function ExtrasClient() {
       }
     };
     fetchExtras();
-  }, [currentMonthName, currentYear]);
+  }, [currentMonthNumber, currentYear]);
 
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">

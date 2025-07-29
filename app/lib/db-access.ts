@@ -58,7 +58,7 @@ export async function storeRosterData(calendarData: CalendarMap, month: number, 
   }
 }
 
-export async function storeExtrasPersonnelData(extras: { name: string, number: number }[], month: string, year: number) {
+export async function storeExtrasPersonnelData(extras: { name: string, number: number }[], month: number, year: number) {
   // Add month and year to each extras record
   const extrasWithMonthYear = extras.map(extra => ({
     ...extra,
@@ -76,7 +76,7 @@ export async function storeExtrasPersonnelData(extras: { name: string, number: n
   }
 }
 
-export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[], month: string, year: number) {
+export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[], month: number, year: number) {
   // Add month and year to each point record
   const pointsWithMonthYear = points.map(point => ({
     ...point,
@@ -161,7 +161,7 @@ export async function getAvailableMonths(): Promise<{ month: number; year: numbe
   }));
 }
 
-export async function getExtrasPersonnel(month?: string, year?: number) {
+export async function getExtrasPersonnel(month?: number, year?: number) {
   let query = readOnlyClient
     .from('extras_personnel')
     .select('*')
@@ -182,7 +182,7 @@ export async function getExtrasPersonnel(month?: string, year?: number) {
   return data;
 }
 
-export async function getPointSystems(month?: string, year?: number) {
+export async function getPointSystems(month?: number, year?: number) {
   let query = readOnlyClient
     .from('point_systems')
     .select('*')

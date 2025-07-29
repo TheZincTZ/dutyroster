@@ -332,13 +332,13 @@ export default function AdminUploadClient() {
       // Process and store extras personnel data
       const extrasPersonnel = getExtrasPersonnelData(result.data);
       if (extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData(extrasPersonnel, monthYear.monthName, monthYear.year);
+        await storeExtrasPersonnelData(extrasPersonnel, monthYear.month, monthYear.year);
       }
 
       // Process and store point system data
       const pointSystems = getPointSystemData(result.data);
       if (pointSystems.length > 0) {
-        await storePointSystemsData(pointSystems, monthYear.monthName, monthYear.year);
+        await storePointSystemsData(pointSystems, monthYear.month, monthYear.year);
       }
 
       // Refresh available months and set selected month to the uploaded month

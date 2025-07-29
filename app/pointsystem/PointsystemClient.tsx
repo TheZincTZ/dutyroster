@@ -24,18 +24,14 @@ export default function PointsystemClient() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const monthNames = [
-    'january', 'february', 'march', 'april', 'may', 'june',
-    'july', 'august', 'september', 'october', 'november', 'december'
-  ];
-  const currentMonthName = monthNames[currentMonth];
+  const currentMonthNumber = currentMonth + 1; // Convert to 1-based month
 
   useEffect(() => {
     const fetchPoints = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getPointSystems(currentMonthName, currentYear);
+        const data = await getPointSystems(currentMonthNumber, currentYear);
         setPoints(data || []);
       } catch {
         setError("Failed to load point system data");
@@ -44,7 +40,7 @@ export default function PointsystemClient() {
       }
     };
     fetchPoints();
-  }, [currentMonthName, currentYear]);
+  }, [currentMonthNumber, currentYear]);
 
   const renderTable = (unit: string, shift: string) => {
     const filtered = points.filter(p => p.unit === unit && p.shift === shift);
