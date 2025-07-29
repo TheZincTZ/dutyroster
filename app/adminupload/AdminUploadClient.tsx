@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
+import { useState, useEffect, useCallback } from "react";
+import { storeRosterData, getRosterData, CalendarMap, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
 const MAX_ATTEMPTS = 5;
@@ -211,7 +211,7 @@ export default function AdminUploadClient() {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-    const loadData = async () => {
+      const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -228,14 +228,14 @@ export default function AdminUploadClient() {
       // Load calendar data for selected month
       if (selectedMonth) {
         const calendarData = await getRosterData(selectedMonth.month, selectedMonth.year);
-          setCalendar(calendarData);
-        }
-      } catch (err) {
+        setCalendar(calendarData);
+      }
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
-      }
-    };
+    }
+  }, [currentMonth, currentYear, selectedMonth]);
     
   // Check if admin is locked
   useEffect(() => {
@@ -246,7 +246,7 @@ export default function AdminUploadClient() {
       setIsLocked(false);
       loadData();
     }
-  }, []);
+  }, [loadData]);
 
   // Load data when selected month changes
   useEffect(() => {
