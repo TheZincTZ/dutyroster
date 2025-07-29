@@ -231,6 +231,15 @@ export default function HomeClient() {
         <div className="text-green-700 text-base sm:text-lg font-medium">
           Current Time: <span className="font-mono">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
+        <div className="text-green-600 text-sm mt-2">
+          Data last updated: {now.toLocaleDateString("en-US", { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </div>
       </div>
 
       {/* Shifts Section */}

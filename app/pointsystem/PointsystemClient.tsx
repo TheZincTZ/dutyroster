@@ -149,6 +149,19 @@ export default function PointsystemClient() {
           <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
 
+        {/* Data Last Updated */}
+        <div className="mb-4 text-center">
+          <div className="text-green-600 text-sm">
+            Data last updated: {new Date().toLocaleDateString("en-US", { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
+
         {/* Month Selector */}
         {availableMonths.length > 0 && (
           <div className="mb-6 p-4 bg-green-50 rounded-lg">
