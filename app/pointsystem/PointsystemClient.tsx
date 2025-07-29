@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/db-access";
+import { getPointSystems } from "../lib/db-access";
 import Link from "next/link";
 
 type PointSystem = {
@@ -12,8 +12,6 @@ type PointSystem = {
   points: number;
   months_valid: number;
   average_points: number;
-  month: number;
-  year: number;
 };
 
 export default function PointsystemClient() {
@@ -22,33 +20,31 @@ export default function PointsystemClient() {
   const [error, setError] = useState<string | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
 
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  const monthNames = [
+    'january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december'
+  ];
+  const currentMonthName = monthNames[currentMonth];
+
   useEffect(() => {
     const fetchPoints = async () => {
       setLoading(true);
       setError(null);
-      
-      // Get current month and year
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
-      const currentYear = currentDate.getFullYear();
-      
-      const { data, error } = await supabase
-        .from("point_systems")
-        .select("id, unit, shift, name, points, months_valid, average_points, month, year")
-        .eq("month", currentMonth)
-        .eq("year", currentYear)
-        .order("unit")
-        .order("shift")
-        .order("name");
-      if (error) {
-        setError("Failed to load point system data");
-      } else {
+      try {
+        const data = await getPointSystems(currentMonthName, currentYear);
         setPoints(data || []);
+      } catch (err) {
+        setError("Failed to load point system data");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchPoints();
-  }, []);
+  }, [currentMonthName, currentYear]);
 
   const renderTable = (unit: string, shift: string) => {
     const filtered = points.filter(p => p.unit === unit && p.shift === shift);

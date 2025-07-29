@@ -58,10 +58,17 @@ export async function storeRosterData(calendarData: CalendarMap, month: number, 
   }
 }
 
-export async function storeExtrasPersonnelData(extras: { name: string, number: number }[]) {
+export async function storeExtrasPersonnelData(extras: { name: string, number: number }[], month: string, year: number) {
+  // Add month and year to each extras record
+  const extrasWithMonthYear = extras.map(extra => ({
+    ...extra,
+    month,
+    year
+  }));
+
   const { error } = await adminClient
     .from('extras_personnel')
-    .upsert(extras);
+    .upsert(extrasWithMonthYear);
 
   if (error) {
     console.error('Error storing extras personnel data:', error);
@@ -69,16 +76,17 @@ export async function storeExtrasPersonnelData(extras: { name: string, number: n
   }
 }
 
-export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[], month: number, year: number) {
+export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[], month: string, year: number) {
+  // Add month and year to each point record
+  const pointsWithMonthYear = points.map(point => ({
+    ...point,
+    month,
+    year
+  }));
+
   const { error } = await adminClient
     .from('point_systems')
-    .upsert(
-      points.map(point => ({
-        ...point,
-        month: month,
-        year: year
-      }))
-    );
+    .upsert(pointsWithMonthYear);
 
   if (error) {
     console.error('Error storing point systems data:', error);
@@ -153,11 +161,18 @@ export async function getAvailableMonths(): Promise<{ month: number; year: numbe
   }));
 }
 
-export async function getExtrasPersonnel() {
-  const { data, error } = await readOnlyClient
+export async function getExtrasPersonnel(month?: string, year?: number) {
+  let query = readOnlyClient
     .from('extras_personnel')
     .select('*')
     .order('name');
+
+  // If month and year are provided, filter by them
+  if (month !== undefined && year !== undefined) {
+    query = query.eq('month', month).eq('year', year);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching extras personnel:', error);
@@ -167,13 +182,20 @@ export async function getExtrasPersonnel() {
   return data;
 }
 
-export async function getPointSystems() {
-  const { data, error } = await readOnlyClient
+export async function getPointSystems(month?: string, year?: number) {
+  let query = readOnlyClient
     .from('point_systems')
     .select('*')
     .order('unit')
     .order('shift')
     .order('name');
+
+  // If month and year are provided, filter by them
+  if (month !== undefined && year !== undefined) {
+    query = query.eq('month', month).eq('year', year);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching point systems:', error);

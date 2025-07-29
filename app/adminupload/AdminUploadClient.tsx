@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { storeRosterData, getRosterData, CalendarMap, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
+import { useState, useEffect } from "react";
+import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
 const MAX_ATTEMPTS = 5;
@@ -11,6 +11,8 @@ const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY || "";
 
 // Remove hardcoded ADMIN_PIN and use environment variable
 const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "";
+
+type ExtrasPersonnel = { name: string; number: number };
 
 type PointSystem = {
   unit: 'brigade' | 'ssp';
@@ -22,67 +24,61 @@ type PointSystem = {
 };
 
 // Function to extract month and year from A1-2
-function extractMonthYear(matrix: string[][]): { month: number; year: number } | null {
+function extractMonthYear(matrix: string[][]): { month: number; year: number; monthName: string } | null {
   try {
-    // Check A1 (index 0,0) and A2 (index 1,0) for month/year information
     const a1 = matrix[0]?.[0]?.toString().trim() || '';
     const a2 = matrix[1]?.[0]?.toString().trim() || '';
-    
-    // Try to parse month/year from A1 or A2
     const monthNames = [
       'january', 'february', 'march', 'april', 'may', 'june',
       'july', 'august', 'september', 'october', 'november', 'december'
     ];
-    
-    // Check A1 first, then A2
-    const textToCheck = [a1, a2];
-    
-    for (const text of textToCheck) {
+    for (const text of [a1, a2]) {
       if (!text) continue;
-      
       const lowerText = text.toLowerCase();
-      
-      // Look for month name and year pattern
       for (let i = 0; i < monthNames.length; i++) {
         const monthName = monthNames[i];
         if (lowerText.includes(monthName)) {
-          // Extract year (4-digit number)
           const yearMatch = text.match(/\b(20\d{2})\b/);
           if (yearMatch) {
-            return {
-              month: i + 1, // Convert to 1-based month
-              year: parseInt(yearMatch[1], 10)
+            return { 
+              month: i + 1, 
+              year: parseInt(yearMatch[1], 10),
+              monthName: monthNames[i]
             };
           }
         }
       }
-      
-      // Also try to parse "MONTH YEAR" format (e.g., "JUNE 2025")
       const monthYearMatch = lowerText.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/);
       if (monthYearMatch) {
         const monthIndex = monthNames.indexOf(monthYearMatch[1]);
         if (monthIndex !== -1) {
-          return {
-            month: monthIndex + 1,
-            year: parseInt(monthYearMatch[2], 10)
+          return { 
+            month: monthIndex + 1, 
+            year: parseInt(monthYearMatch[2], 10),
+            monthName: monthNames[monthIndex]
           };
         }
       }
     }
-    
-    // If no month/year found, return current month/year as fallback
     const now = new Date();
-    return {
-      month: now.getMonth() + 1,
-      year: now.getFullYear()
+    const currentMonthName = monthNames[now.getMonth()];
+    return { 
+      month: now.getMonth() + 1, 
+      year: now.getFullYear(),
+      monthName: currentMonthName
     };
   } catch (error) {
     console.error('Error extracting month/year:', error);
-    // Return current month/year as fallback
     const now = new Date();
-    return {
-      month: now.getMonth() + 1,
-      year: now.getFullYear()
+    const monthNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december'
+    ];
+    const currentMonthName = monthNames[now.getMonth()];
+    return { 
+      month: now.getMonth() + 1, 
+      year: now.getFullYear(),
+      monthName: currentMonthName
     };
   }
 }
@@ -111,6 +107,18 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
   }
   return calendar;
+}
+
+function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
+  const extras: ExtrasPersonnel[] = [];
+  // Start at row 36 (index 35), go down until name is empty
+  for (let row = 35; row < matrix.length; row++) {
+    const name = matrix[row]?.[5]?.toString().trim(); // Column F
+    const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
+    if (!name) break; // Stop at first empty row
+    extras.push({ name, number });
+  }
+  return extras;
 }
 
 function getPointSystemData(matrix: string[][]): PointSystem[] {
@@ -211,7 +219,7 @@ export default function AdminUploadClient() {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-      const loadData = useCallback(async () => {
+    const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -228,14 +236,14 @@ export default function AdminUploadClient() {
       // Load calendar data for selected month
       if (selectedMonth) {
         const calendarData = await getRosterData(selectedMonth.month, selectedMonth.year);
-        setCalendar(calendarData);
-      }
-    } catch (err) {
+          setCalendar(calendarData);
+        }
+      } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
-    }
-  }, [currentMonth, currentYear, selectedMonth]);
+      }
+    };
     
   // Check if admin is locked
   useEffect(() => {
@@ -246,7 +254,7 @@ export default function AdminUploadClient() {
       setIsLocked(false);
       loadData();
     }
-  }, [loadData]);
+  }, []);
 
   // Load data when selected month changes
   useEffect(() => {
@@ -315,10 +323,16 @@ export default function AdminUploadClient() {
       setCalendar(newCalendar);
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
 
+      // Process and store extras personnel data
+      const extrasPersonnel = getExtrasPersonnelData(result.data);
+      if (extrasPersonnel.length > 0) {
+        await storeExtrasPersonnelData(extrasPersonnel, monthYear.monthName, monthYear.year);
+      }
+
       // Process and store point system data
       const pointSystems = getPointSystemData(result.data);
       if (pointSystems.length > 0) {
-        await storePointSystemsData(pointSystems, monthYear.month, monthYear.year);
+        await storePointSystemsData(pointSystems, monthYear.monthName, monthYear.year);
       }
 
       // Refresh available months and set selected month to the uploaded month

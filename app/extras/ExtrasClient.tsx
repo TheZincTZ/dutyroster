@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/db-access";
+import { getExtrasPersonnel } from "../lib/db-access";
 import Link from "next/link";
 
 type ExtrasPersonnel = {
@@ -15,23 +15,31 @@ export default function ExtrasClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  const monthNames = [
+    'january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december'
+  ];
+  const currentMonthName = monthNames[currentMonth];
+
   useEffect(() => {
     const fetchExtras = async () => {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase
-        .from("extras_personnel")
-        .select("id, name, number")
-        .order("name");
-      if (error) {
-        setError("Failed to load extras personnel");
-      } else {
+      try {
+        const data = await getExtrasPersonnel(currentMonthName, currentYear);
         setExtras(data || []);
+      } catch (err) {
+        setError("Failed to load extras personnel");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchExtras();
-  }, []);
+  }, [currentMonthName, currentYear]);
 
   return (
     <main className="min-h-screen p-4 sm:p-6 md:p-8 bg-green-50">
