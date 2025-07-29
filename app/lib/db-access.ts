@@ -170,9 +170,9 @@ export async function getAvailableMonths(): Promise<{ month: number; year: numbe
     .sort((a, b) => {
       // Sort by year first, then by month
       if (a.year !== b.year) {
-        return b.year - a.year; // Descending order
+        return a.year - b.year; // Ascending order
       }
-      return b.month - a.month; // Descending order
+      return a.month - b.month; // Ascending order
     })
     .map(({ month, year }) => ({
       month,
