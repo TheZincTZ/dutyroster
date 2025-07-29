@@ -139,7 +139,7 @@ export async function getAvailableMonths(): Promise<{ month: number; year: numbe
     throw error;
   }
 
-  // Get unique month/year combinations
+  // Get unique month/year combinations from database
   const uniqueMonths = new Map<string, { month: number; year: number }>();
   data.forEach((row) => {
     const key = `${row.year}-${row.month}`;
@@ -148,17 +148,37 @@ export async function getAvailableMonths(): Promise<{ month: number; year: numbe
     }
   });
 
+  // Add all months from current month through December 2025
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // Convert to 1-based
+  const currentYear = currentDate.getFullYear();
+  
+  for (let month = currentMonth; month <= 12; month++) {
+    const key = `${currentYear}-${month}`;
+    if (!uniqueMonths.has(key)) {
+      uniqueMonths.set(key, { month, year: currentYear });
+    }
+  }
+
   // Convert to array and add month names
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  return Array.from(uniqueMonths.values()).map(({ month, year }) => ({
-    month,
-    year,
-    monthName: `${monthNames[month - 1]} ${year}`
-  }));
+  return Array.from(uniqueMonths.values())
+    .sort((a, b) => {
+      // Sort by year first, then by month
+      if (a.year !== b.year) {
+        return b.year - a.year; // Descending order
+      }
+      return b.month - a.month; // Descending order
+    })
+    .map(({ month, year }) => ({
+      month,
+      year,
+      monthName: `${monthNames[month - 1]} ${year}`
+    }));
 }
 
 export async function getExtrasPersonnel(month?: number, year?: number) {

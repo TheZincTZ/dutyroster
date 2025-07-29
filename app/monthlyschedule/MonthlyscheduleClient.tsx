@@ -71,7 +71,11 @@ export default function MonthlyscheduleClient() {
   };
   
   // Build 5-week calendar grid always starting from Monday
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  // Use selectedMonth if available, otherwise use current month
+  const displayMonth = selectedMonth ? selectedMonth.month - 1 : currentMonth; // Convert to 0-based
+  const displayYear = selectedMonth ? selectedMonth.year : currentYear;
+  
+  const firstDayOfMonth = new Date(displayYear, displayMonth, 1);
   const firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sun, 1=Mon, ...
   
   // Calculate the Monday that starts the first week of the month
@@ -92,7 +96,7 @@ export default function MonthlyscheduleClient() {
       
       weekData.push({
         date: currentDate.getDate(),
-        isCurrentMonth: currentDate.getMonth() === currentMonth,
+        isCurrentMonth: currentDate.getMonth() === displayMonth,
         month: currentDate.getMonth(),
         year: currentDate.getFullYear()
       });

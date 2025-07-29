@@ -30,7 +30,7 @@ export default function PointsystemClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load available months
+        // Load available months (includes all months from current through December)
         const months = await getAvailableMonths();
         setAvailableMonths(months);
         

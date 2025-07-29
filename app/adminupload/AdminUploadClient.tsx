@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { storeRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
+import { storeRosterData, CalendarMap, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
 const MAX_ATTEMPTS = 5;
@@ -11,8 +11,6 @@ const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY || "";
 
 // Remove hardcoded ADMIN_PIN and use environment variable
 const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "";
-
-type ExtrasPersonnel = { name: string; number: number };
 
 type PointSystem = {
   unit: 'brigade' | 'ssp';
@@ -107,18 +105,6 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
     }
   }
   return calendar;
-}
-
-function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
-  const extras: ExtrasPersonnel[] = [];
-  // Start at row 36 (index 35), go down until name is empty
-  for (let row = 35; row < matrix.length; row++) {
-    const name = matrix[row]?.[5]?.toString().trim(); // Column F
-    const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
-    if (!name) break; // Stop at first empty row
-    extras.push({ name, number });
-  }
-  return extras;
 }
 
 function getPointSystemData(matrix: string[][]): PointSystem[] {
@@ -297,12 +283,6 @@ export default function AdminUploadClient() {
       // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
-
-      // Process and store extras personnel data
-      const extrasPersonnel = getExtrasPersonnelData(result.data);
-      if (extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData(extrasPersonnel, monthYear.month, monthYear.year);
-      }
 
       // Process and store point system data
       const pointSystems = getPointSystemData(result.data);
