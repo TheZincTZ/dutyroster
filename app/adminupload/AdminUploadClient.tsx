@@ -203,7 +203,6 @@ export default function AdminUploadClient() {
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const isUploadingRef = useRef(false);
 
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
@@ -294,7 +293,6 @@ export default function AdminUploadClient() {
     const file = event.target.files?.[0];
     if (!file) return;
     setLoading(true);
-    setIsUploading(true);
     isUploadingRef.current = true;
     setError(null);
     setSuccess(null);
@@ -337,7 +335,6 @@ export default function AdminUploadClient() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
-      setIsUploading(false);
       isUploadingRef.current = false;
     }
   };
