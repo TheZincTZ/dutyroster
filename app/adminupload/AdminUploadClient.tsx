@@ -212,6 +212,7 @@ export default function AdminUploadClient() {
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [hasFreshCalendarData, setHasFreshCalendarData] = useState(false);
 
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
@@ -259,15 +260,16 @@ export default function AdminUploadClient() {
 
   // Load data when selected month changes
   useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploading) {
+    if (selectedMonth && !isLocked && !isUploading && !hasFreshCalendarData) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
-  }, [selectedMonth, isLocked, isUploading]);
+  }, [selectedMonth, isLocked, isUploading, hasFreshCalendarData]);
 
   const loadCalendarForMonth = async (month: number, year: number) => {
     try {
       const calendarData = await getRosterData(month, year);
       setCalendar(calendarData);
+      setHasFreshCalendarData(false); // Reset flag when loading from database
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load calendar data");
     }
@@ -325,6 +327,7 @@ export default function AdminUploadClient() {
       
       // Update calendar state immediately for preview
       setCalendar(newCalendar);
+      setHasFreshCalendarData(true); // Mark that we have fresh data
       
       // Store data in database
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
@@ -354,6 +357,8 @@ export default function AdminUploadClient() {
     } finally {
       setLoading(false);
       setIsUploading(false);
+      // Reset the fresh data flag after a delay to allow for future month changes
+      setTimeout(() => setHasFreshCalendarData(false), 1000);
     }
   };
 
