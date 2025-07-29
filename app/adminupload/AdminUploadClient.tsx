@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { storeRosterData, getRosterData, CalendarMap, storeExtrasPersonnelData, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
@@ -212,7 +212,10 @@ export default function AdminUploadClient() {
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [hasFreshCalendarData, setHasFreshCalendarData] = useState(false);
+  const [uploadedCalendarData, setUploadedCalendarData] = useState<CalendarMap | null>(null);
+  
+  // Use ref to track upload state more reliably
+  const isUploadingRef = useRef(false);
 
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
@@ -258,18 +261,22 @@ export default function AdminUploadClient() {
     }
   }, [loadData]);
 
-  // Load data when selected month changes
+  // Load data when selected month changes - but only if we don't have uploaded data
   useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploading && !hasFreshCalendarData) {
+    if (selectedMonth && !isLocked && !isUploadingRef.current && !uploadedCalendarData) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
-  }, [selectedMonth, isLocked, isUploading, hasFreshCalendarData]);
+  }, [selectedMonth, isLocked, uploadedCalendarData]);
 
   const loadCalendarForMonth = async (month: number, year: number) => {
+    // Don't load if we have uploaded data for this month
+    if (uploadedCalendarData) {
+      return;
+    }
+    
     try {
       const calendarData = await getRosterData(month, year);
       setCalendar(calendarData);
-      setHasFreshCalendarData(false); // Reset flag when loading from database
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load calendar data");
     }
@@ -302,12 +309,16 @@ export default function AdminUploadClient() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
     setLoading(true);
     setError(null);
     setSuccess(null);
     setIsUploading(true);
+    isUploadingRef.current = true; // Set ref immediately
+    
     const formData = new FormData();
     formData.append("file", file);
+    
     try {
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -325,9 +336,11 @@ export default function AdminUploadClient() {
       // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
       
+      // Set uploaded data first to prevent useEffect interference
+      setUploadedCalendarData(newCalendar);
+      
       // Update calendar state immediately for preview
       setCalendar(newCalendar);
-      setHasFreshCalendarData(true); // Mark that we have fresh data
       
       // Store data in database
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
@@ -348,17 +361,20 @@ export default function AdminUploadClient() {
       const months = await getAvailableMonths();
       setAvailableMonths(months);
       
-      // Update selected month without triggering the useEffect that causes loading
+      // Update selected month - this won't trigger useEffect due to uploadedCalendarData
       setSelectedMonth({ month: monthYear.month, year: monthYear.year });
 
       setSuccess(`File uploaded successfully! Schedule for ${getMonthName(monthYear.month)} ${monthYear.year} has been updated.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
+      // Clear uploaded data on error
+      setUploadedCalendarData(null);
     } finally {
       setLoading(false);
       setIsUploading(false);
-      // Reset the fresh data flag after a delay to allow for future month changes
-      setTimeout(() => setHasFreshCalendarData(false), 1000);
+      isUploadingRef.current = false; // Reset ref
+      // Keep uploaded data for a while to prevent flickering
+      setTimeout(() => setUploadedCalendarData(null), 2000);
     }
   };
 
