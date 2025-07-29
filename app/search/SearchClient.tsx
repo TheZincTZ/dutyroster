@@ -6,6 +6,8 @@ import Link from "next/link";
 
 type Duty = {
   date: number;
+  month: number;
+  year: number;
   shift: string;
   type: string;
   isExtra: boolean;
@@ -13,6 +15,8 @@ type Duty = {
 
 interface RosterRow {
   date: number;
+  month: number;
+  year: number;
   AM?: string;
   PM?: string;
   ReserveAM?: string;
@@ -45,24 +49,20 @@ export default function SearchClient() {
       }));
   }
 
-  // Load all unique personnel names on mount
+  // Load all unique personnel names from all months on mount
   useEffect(() => {
     const fetchRoster = async () => {
       setError(null);
       try {
-        // Get current month and year
-        const now = new Date();
-        const currentMonth = now.getMonth() + 1; // Convert to 1-based month
-        const currentYear = now.getFullYear();
-        
+        // Get all roster data from all months
         const { data, error } = await supabase
           .from("roster_data")
           .select("*")
-          .eq('month', currentMonth)
-          .eq('year', currentYear);
+          .order('year', { ascending: true })
+          .order('month', { ascending: true });
         if (error) throw error;
         setRosterData(data || []);
-        // Extract all unique names from all fields
+        // Extract all unique names from all fields across all months
         const nameSet = new Set<string>();
         data?.forEach((row: RosterRow) => {
           [
@@ -99,7 +99,7 @@ export default function SearchClient() {
     setResults([]);
   }, [searchTerm, allNames]);
 
-  // When a name is selected, find all duties for that name, and indicate if it's an extra
+  // When a name is selected, find all duties for that name across all months, and indicate if it's an extra
   useEffect(() => {
     if (!selectedName) return;
     const duties: Duty[] = [];
@@ -112,8 +112,15 @@ export default function SearchClient() {
       const check = (cell: string, shift: string, type: string) => {
         extractNamesWithExtra(cell).forEach(({ name, isExtra }) => {
           if (name === searchName) {
-            duties.push({ date: day.date, shift, type, isExtra });
-      }
+            duties.push({ 
+              date: day.date, 
+              month: day.month,
+              year: day.year,
+              shift, 
+              type, 
+              isExtra 
+            });
+          }
         });
       };
       check(am, "AM", "Primary");
@@ -128,6 +135,15 @@ export default function SearchClient() {
     setSelectedName(name);
     setSearchTerm(name);
     setNameSuggestions([]);
+  };
+
+  // Helper function to get month name
+  const getMonthName = (month: number): string => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[month - 1] || '';
   };
 
   return (
@@ -214,7 +230,7 @@ export default function SearchClient() {
           )}
           {/* Search hint */}
           <div className="mt-2 text-green-700 text-xs sm:text-sm text-center">
-            Start typing a name to search for personnel duties.
+            Start typing a name to search for personnel duties across all months.
           </div>
         </form>
 
@@ -247,7 +263,9 @@ export default function SearchClient() {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="font-semibold text-green-700">{new Date(2025, 6, result.date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}:</span>
+                          <span className="font-semibold text-green-700">
+                            {getMonthName(result.month)} {result.date}, {result.year}:
+                          </span>
                           <span className="ml-2 text-green-800">
                             {result.shift} Shift ({result.type})
                             {result.isExtra && <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded font-bold">EXTRA DUTY</span>}
