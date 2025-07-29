@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { storeRosterData, getRosterData, CalendarMap, storePointSystemsData, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
@@ -204,6 +204,7 @@ export default function AdminUploadClient() {
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const isUploadingRef = useRef(false);
 
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
@@ -251,10 +252,10 @@ export default function AdminUploadClient() {
 
   // Load data when selected month changes
   useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploading) {
+    if (selectedMonth && !isLocked && !isUploadingRef.current) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
-  }, [selectedMonth, isLocked, isUploading]);
+  }, [selectedMonth, isLocked]);
 
   const loadCalendarForMonth = async (month: number, year: number) => {
     try {
@@ -294,6 +295,7 @@ export default function AdminUploadClient() {
     if (!file) return;
     setLoading(true);
     setIsUploading(true);
+    isUploadingRef.current = true;
     setError(null);
     setSuccess(null);
     const formData = new FormData();
@@ -336,6 +338,7 @@ export default function AdminUploadClient() {
     } finally {
       setLoading(false);
       setIsUploading(false);
+      isUploadingRef.current = false;
     }
   };
 
