@@ -24,7 +24,7 @@ export default function PointsystemClient() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const currentMonthNumber = currentMonth + 1; // Convert to 1-based month
+  const currentMonthNumber = currentMonth + 1; // Convert to 1-based month number
 
   useEffect(() => {
     const fetchPoints = async () => {
