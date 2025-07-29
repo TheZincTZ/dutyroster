@@ -189,16 +189,7 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   return points;
 }
 
-// Helper function to render a name with (EXTRA) in bold red
-function renderName(name: string) {
-  if (name && name.includes('(EXTRA)')) {
-    return <span style={{ color: 'red', fontWeight: 'bold' }}>{name}</span>;
-  }
-  return name;
-}
-
 export default function AdminUploadClient() {
-  const [calendar, setCalendar] = useState<CalendarMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -211,7 +202,6 @@ export default function AdminUploadClient() {
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
-  const [uploadedCalendarData, setUploadedCalendarData] = useState<CalendarMap | null>(null);
   
   // Use ref to track upload state more reliably
   const isUploadingRef = useRef(false);
@@ -236,18 +226,12 @@ export default function AdminUploadClient() {
         const currentMonthData = months.find(m => m.month === currentMonth + 1 && m.year === currentYear);
         setSelectedMonth(currentMonthData ? { month: currentMonthData.month, year: currentMonthData.year } : { month: months[0].month, year: months[0].year });
       }
-      
-      // Load calendar data for selected month
-      if (selectedMonth) {
-        const calendarData = await getRosterData(selectedMonth.month, selectedMonth.year);
-        setCalendar(calendarData);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [currentMonth, currentYear, selectedMonth]);
+  }, [currentMonth, currentYear]);
 
   // Check if admin is locked
   useEffect(() => {
@@ -259,27 +243,6 @@ export default function AdminUploadClient() {
       loadData();
     }
   }, [loadData]);
-
-  const loadCalendarForMonth = useCallback(async (month: number, year: number) => {
-    // Don't load if we have uploaded data for this month
-    if (uploadedCalendarData) {
-      return;
-    }
-    
-    try {
-      const calendarData = await getRosterData(month, year);
-      setCalendar(calendarData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load calendar data");
-    }
-  }, [uploadedCalendarData]);
-
-  // Load data when selected month changes - but only if we don't have uploaded data
-  useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploadingRef.current && !uploadedCalendarData) {
-      loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
-    }
-  }, [selectedMonth, isLocked, uploadedCalendarData, loadCalendarForMonth]);
 
   // Lock if attempts exceeded
   useEffect(() => {
@@ -333,14 +296,6 @@ export default function AdminUploadClient() {
       
       // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
-      
-      // Set uploaded data first to prevent useEffect interference
-      setUploadedCalendarData(newCalendar);
-      
-      // Update calendar state immediately for preview
-      setCalendar(newCalendar);
-      
-      // Store data in database
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
 
       // Process and store extras personnel data
@@ -362,25 +317,13 @@ export default function AdminUploadClient() {
       // Update selected month - this won't trigger useEffect due to uploadedCalendarData
       setSelectedMonth({ month: monthYear.month, year: monthYear.year });
 
-      setSuccess(`File uploaded successfully! Schedule for ${getMonthName(monthYear.month)} ${monthYear.year} has been updated.`);
+      setSuccess(`File uploaded successfully! Schedule for ${monthYear.monthName} ${monthYear.year} has been updated.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-      // Clear uploaded data on error
-      setUploadedCalendarData(null);
     } finally {
       setLoading(false);
       isUploadingRef.current = false; // Reset ref
-      // Keep uploaded data for a while to prevent flickering
-      setTimeout(() => setUploadedCalendarData(null), 2000);
     }
-  };
-
-  const getMonthName = (month: number): string => {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return monthNames[month - 1] || 'Unknown';
   };
 
   // Build 5-week calendar grid always starting from Monday
@@ -562,76 +505,6 @@ export default function AdminUploadClient() {
             </div>
           )}
         </div>
-
-        {/* Calendar Preview */}
-        {selectedMonth && (
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-green-800 mb-4">
-              Calendar Preview - {getMonthName(selectedMonth.month)} {selectedMonth.year}
-            </h3>
-            {loading ? (
-              <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2 py-8">
-                <span className="text-3xl animate-spin">🌀</span>
-                Loading calendar...
-              </div>
-            ) : (
-          <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-green-300 bg-white rounded-lg overflow-hidden shadow-lg">
-              <thead>
-                    <tr className="bg-green-600 text-white">
-                      <th className="p-3 text-center font-bold">Mon</th>
-                      <th className="p-3 text-center font-bold">Tue</th>
-                      <th className="p-3 text-center font-bold">Wed</th>
-                      <th className="p-3 text-center font-bold">Thu</th>
-                      <th className="p-3 text-center font-bold">Fri</th>
-                      <th className="p-3 text-center font-bold">Sat</th>
-                      <th className="p-3 text-center font-bold">Sun</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((week, wIdx) => (
-                  <tr key={wIdx}>
-                        {week.map((dayInfo, dIdx) => (
-                          <td key={dIdx} className={`align-top px-4 py-3 border min-w-[180px] transition ${
-                            dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
-                          }`}>
-                          <div>
-                              <div className={`font-bold mb-2 text-lg ${
-                                dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
-                              }`}>
-                                {dayInfo.date}
-                              </div>
-                              {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
-                                <div className="space-y-2">
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-green-700">AM:</div>
-                                    <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].AM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-black">Reserve AM:</div>
-                                    <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReserveAM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-green-700">PM:</div>
-                                    <div className="text-green-800 text-sm">{renderName(calendar[dayInfo.date].PM)}</div>
-                                  </div>
-                                  <div className="bg-white p-2 rounded shadow-sm">
-                                    <div className="font-semibold text-black">Reserve PM:</div>
-                                    <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReservePM)}</div>
-                                  </div>
-                              </div>
-                            )}
-                          </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </main>
   );
