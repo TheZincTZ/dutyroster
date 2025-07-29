@@ -251,7 +251,12 @@ export default function AdminUploadClient() {
 
   // Load data when selected month changes
   useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploadingRef.current) {
+    // Skip loading if we're currently uploading
+    if (isUploadingRef.current) {
+      return;
+    }
+    
+    if (selectedMonth && !isLocked) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
   }, [selectedMonth, isLocked]);
@@ -322,14 +327,13 @@ export default function AdminUploadClient() {
         await storePointSystemsData(pointSystems, monthYear.month, monthYear.year);
       }
 
-      // Refresh available months and set selected month to the uploaded month
+      // Refresh available months
       const months = await getAvailableMonths();
       setAvailableMonths(months);
       
-      // Set calendar and selected month together to prevent flickering
+      // Set calendar and selected month together
       setCalendar(newCalendar);
       setSelectedMonth({ month: monthYear.month, year: monthYear.year });
-
       setSuccess(`File uploaded successfully! Schedule for ${getMonthName(monthYear.month)} ${monthYear.year} has been updated.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
