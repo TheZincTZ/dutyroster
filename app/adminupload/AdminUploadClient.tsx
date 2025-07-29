@@ -12,8 +12,6 @@ const PIN_LOCK_KEY = process.env.NEXT_PUBLIC_PIN_LOCK_KEY || "";
 // Remove hardcoded ADMIN_PIN and use environment variable
 const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "";
 
-type ExtrasPersonnel = { name: string; number: number };
-
 type PointSystem = {
   unit: 'brigade' | 'ssp';
   shift: 'morning' | 'night';
@@ -115,18 +113,6 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   return calendar;
 }
 
-function getExtrasPersonnelData(matrix: string[][]): ExtrasPersonnel[] {
-  const extras: ExtrasPersonnel[] = [];
-  // Start at row 36 (index 35), go down until name is empty
-  for (let row = 35; row < matrix.length; row++) {
-    const name = matrix[row]?.[5]?.toString().trim(); // Column F
-    const number = parseInt(matrix[row]?.[6]?.toString() || '0', 10); // Column G
-    if (!name) break; // Stop at first empty row
-    extras.push({ name, number });
-  }
-  return extras;
-}
-
 function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
   const COLUMN_MAP = { 'J': 9, 'K': 10, 'L': 11, 'M': 12 };
@@ -225,7 +211,7 @@ export default function AdminUploadClient() {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-  const loadData = async () => {
+    const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -242,15 +228,15 @@ export default function AdminUploadClient() {
       // Load calendar data for selected month
       if (selectedMonth) {
         const calendarData = await getRosterData(selectedMonth.month, selectedMonth.year);
-        setCalendar(calendarData);
-      }
-    } catch (err) {
+          setCalendar(calendarData);
+        }
+      } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
-    }
-  };
-
+      }
+    };
+    
   // Check if admin is locked
   useEffect(() => {
     const lockState = localStorage.getItem(PIN_LOCK_KEY);
@@ -329,16 +315,10 @@ export default function AdminUploadClient() {
       setCalendar(newCalendar);
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
 
-      // Process and store extras personnel data
-      const extrasPersonnel = getExtrasPersonnelData(result.data);
-      if (extrasPersonnel.length > 0) {
-        await storeExtrasPersonnelData(extrasPersonnel);
-      }
-
       // Process and store point system data
       const pointSystems = getPointSystemData(result.data);
       if (pointSystems.length > 0) {
-        await storePointSystemsData(pointSystems);
+        await storePointSystemsData(pointSystems, monthYear.month, monthYear.year);
       }
 
       // Refresh available months and set selected month to the uploaded month
@@ -525,16 +505,16 @@ export default function AdminUploadClient() {
             className="w-full p-3 border border-green-300 rounded-lg bg-white"
             disabled={loading}
           />
-          {loading && (
+        {loading && (
             <div className="mt-4 text-center text-green-700">
               <span className="text-2xl animate-spin">🌀</span> Processing...
-            </div>
-          )}
-          {error && (
+          </div>
+        )}
+        {error && (
             <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700">
-              {error}
-            </div>
-          )}
+            {error}
+          </div>
+        )}
           {success && (
             <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700">
               {success}
@@ -554,9 +534,9 @@ export default function AdminUploadClient() {
                 Loading calendar...
               </div>
             ) : (
-              <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-green-300 bg-white rounded-lg overflow-hidden shadow-lg">
-                  <thead>
+              <thead>
                     <tr className="bg-green-600 text-white">
                       <th className="p-3 text-center font-bold">Mon</th>
                       <th className="p-3 text-center font-bold">Tue</th>
@@ -565,16 +545,16 @@ export default function AdminUploadClient() {
                       <th className="p-3 text-center font-bold">Fri</th>
                       <th className="p-3 text-center font-bold">Sat</th>
                       <th className="p-3 text-center font-bold">Sun</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weeks.map((week, wIdx) => (
-                      <tr key={wIdx}>
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map((week, wIdx) => (
+                  <tr key={wIdx}>
                         {week.map((dayInfo, dIdx) => (
                           <td key={dIdx} className={`align-top px-4 py-3 border min-w-[180px] transition ${
                             dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
                           }`}>
-                            <div>
+                          <div>
                               <div className={`font-bold mb-2 text-lg ${
                                 dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
                               }`}>
@@ -598,15 +578,15 @@ export default function AdminUploadClient() {
                                     <div className="font-semibold text-black">Reserve PM:</div>
                                     <div className="text-black text-sm">{renderName(calendar[dayInfo.date].ReservePM)}</div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
+                              </div>
+                            )}
+                          </div>
+                      </td>
                     ))}
-                  </tbody>
-                </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
               </div>
             )}
           </div>

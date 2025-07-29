@@ -16,7 +16,7 @@ export default function MonthlyscheduleClient() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -32,7 +32,7 @@ export default function MonthlyscheduleClient() {
           
           // Load calendar data for selected month
           const calendarData = await getRosterData(targetMonth.month, targetMonth.year);
-          setCalendar(calendarData);
+        setCalendar(calendarData);
         }
       } catch {
         setError("Failed to load duty roster");
@@ -107,10 +107,10 @@ export default function MonthlyscheduleClient() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
-              <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-900 tracking-tight flex items-center gap-2">
+            <span className="inline-block w-2 h-6 sm:h-8 bg-green-600 rounded-full mr-2"></span>
               Monthly Schedule
-            </h1>
+          </h1>
             <button
               onClick={() => {
                 sessionStorage.removeItem('dutyRosterAuthenticated');
@@ -161,15 +161,15 @@ export default function MonthlyscheduleClient() {
             
             {loading ? (
               <div className="text-center text-green-700 text-lg font-medium flex flex-col items-center gap-2 py-8">
-                <span className="text-3xl animate-spin">🌀</span>
+            <span className="text-3xl animate-spin">🌀</span>
                 Loading calendar...
-              </div>
-            ) : error ? (
+          </div>
+        ) : error ? (
               <div className="text-center text-red-600 text-lg font-medium py-8">{error}</div>
-            ) : (
-              <div className="overflow-x-auto">
+        ) : (
+          <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-green-300 bg-white rounded-lg overflow-hidden shadow-lg">
-                  <thead>
+              <thead>
                     <tr className="bg-green-600 text-white">
                       <th className="p-2 sm:p-3 text-center font-bold text-xs sm:text-base">Mon</th>
                       <th className="p-2 sm:p-3 text-center font-bold text-xs sm:text-base">Tue</th>
@@ -178,36 +178,36 @@ export default function MonthlyscheduleClient() {
                       <th className="p-2 sm:p-3 text-center font-bold text-xs sm:text-base">Fri</th>
                       <th className="p-2 sm:p-3 text-center font-bold text-xs sm:text-base">Sat</th>
                       <th className="p-2 sm:p-3 text-center font-bold text-xs sm:text-base">Sun</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weeks.map((week, wIdx) => (
-                      <tr key={wIdx}>
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map((week, wIdx) => (
+                  <tr key={wIdx}>
                         {week.map((dayInfo, dIdx) => (
                           <td key={dIdx} className={`align-top px-1 sm:px-2 py-2 border min-w-[90px] sm:min-w-[120px] transition ${
                             dayInfo.isCurrentMonth ? 'bg-green-50 hover:bg-green-100' : 'bg-gray-50'
                           }`}>
-                              <div>
+                          <div>
                               <div className={`font-bold mb-1 text-xs sm:text-lg ${
                                 dayInfo.isCurrentMonth ? 'text-green-700' : 'text-gray-400'
                               }`}>
                                 {dayInfo.date}
                               </div>
                               {dayInfo.isCurrentMonth && calendar[dayInfo.date] && (
-                                  <div className="space-y-1">
+                              <div className="space-y-1">
                                   <div><span className="font-semibold text-green-700">AM:</span> <span className="text-green-800">{renderName(calendar[dayInfo.date].AM)}</span></div>
                                   <div className="text-xs"><span className="font-semibold text-black">Res AM:</span> <span className="text-black">{renderName(calendar[dayInfo.date].ReserveAM)}</span></div>
                                   <div><span className="font-semibold text-green-700">PM:</span> <span className="text-green-800">{renderName(calendar[dayInfo.date].PM)}</span></div>
                                   <div className="text-xs"><span className="font-semibold text-black">Res PM:</span> <span className="text-black">{renderName(calendar[dayInfo.date].ReservePM)}</span></div>
-                                  </div>
-                                )}
                               </div>
-                          </td>
-                        ))}
-                      </tr>
+                            )}
+                          </div>
+                      </td>
                     ))}
-                  </tbody>
-                </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
               </div>
             )}
           </div>
