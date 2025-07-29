@@ -37,7 +37,7 @@ export default function PointsystemClient() {
       try {
         const data = await getPointSystems(currentMonthName, currentYear);
         setPoints(data || []);
-      } catch (err) {
+      } catch {
         setError("Failed to load point system data");
       } finally {
         setLoading(false);

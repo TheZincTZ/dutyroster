@@ -32,7 +32,7 @@ export default function ExtrasClient() {
       try {
         const data = await getExtrasPersonnel(currentMonthName, currentYear);
         setExtras(data || []);
-      } catch (err) {
+      } catch {
         setError("Failed to load extras personnel");
       } finally {
         setLoading(false);
