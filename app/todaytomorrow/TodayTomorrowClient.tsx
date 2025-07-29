@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap } from "../lib/db-access";
+import { getRosterData, CalendarMap, getLastUploadTime } from "../lib/db-access";
 import Link from "next/link";
 import { renderName } from "../lib/renderName";
 
@@ -14,6 +14,7 @@ export default function TodayTomorrowClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [today] = useState(new Date());
+  const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -23,8 +24,12 @@ export default function TodayTomorrowClient() {
         const currentMonth = now.getMonth() + 1; // Convert to 1-based month
         const currentYear = now.getFullYear();
         
-        const calendarData = await getRosterData(currentMonth, currentYear);
+        const [calendarData, uploadTime] = await Promise.all([
+          getRosterData(currentMonth, currentYear),
+          getLastUploadTime()
+        ]);
         setCalendar(calendarData);
+        setLastUploadTime(uploadTime);
       } catch {
         setError("Failed to load duty roster");
       } finally {
@@ -71,13 +76,16 @@ export default function TodayTomorrowClient() {
         {/* Data Last Updated */}
         <div className="mb-4 text-center">
           <div className="text-green-600 text-sm">
-            Data last updated: {new Date().toLocaleDateString("en-US", { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            Data last updated: {lastUploadTime ? 
+              new Date(lastUploadTime).toLocaleDateString("en-US", { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 
+              'No data available'
+            }
           </div>
         </div>
         {loading ? (

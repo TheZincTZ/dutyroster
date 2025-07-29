@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap, getAvailableMonths } from "../lib/db-access";
+import { getRosterData, CalendarMap, getAvailableMonths, getLastUploadTime } from "../lib/db-access";
 import Link from "next/link";
 import { renderName } from "../lib/renderName";
 
@@ -11,6 +11,7 @@ export default function MonthlyscheduleClient() {
   const [error, setError] = useState<string | null>(null);
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
+  const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
 
   // Get current month and year
   const currentDate = new Date();
@@ -20,9 +21,13 @@ export default function MonthlyscheduleClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load available months
-        const months = await getAvailableMonths();
+        // Load available months and last upload time
+        const [months, uploadTime] = await Promise.all([
+          getAvailableMonths(),
+          getLastUploadTime()
+        ]);
         setAvailableMonths(months);
+        setLastUploadTime(uploadTime);
         
         // Set selected month to current month if available, otherwise to the most recent month
         if (months.length > 0) {
@@ -159,13 +164,16 @@ export default function MonthlyscheduleClient() {
         {/* Data Last Updated */}
         <div className="mb-4 text-center">
           <div className="text-green-600 text-sm">
-            Data last updated: {new Date().toLocaleDateString("en-US", { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            Data last updated: {lastUploadTime ? 
+              new Date(lastUploadTime).toLocaleDateString("en-US", { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 
+              'No data available'
+            }
           </div>
         </div>
 

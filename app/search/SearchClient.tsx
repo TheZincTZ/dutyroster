@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/db-access";
+import { supabase, getLastUploadTime } from "../lib/db-access";
 import Link from "next/link";
 
 type Duty = {
@@ -35,6 +35,7 @@ export default function SearchClient() {
   const [results, setResults] = useState<Duty[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rosterData, setRosterData] = useState<RosterRow[]>([]);
+  const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
 
   // Helper to extract all names from a cell, returning both the clean name and if it's extra
   function extractNamesWithExtra(cell: string): { name: string, isExtra: boolean }[] {
@@ -54,17 +55,23 @@ export default function SearchClient() {
     const fetchRoster = async () => {
       setError(null);
       try {
-        // Get all roster data from all months
-        const { data, error } = await supabase
-          .from("roster_data")
-          .select("*")
-          .order('year', { ascending: true })
-          .order('month', { ascending: true });
-        if (error) throw error;
-        setRosterData(data || []);
+        // Get all roster data from all months and last upload time
+        const [rosterResult, uploadTime] = await Promise.all([
+          supabase
+            .from("roster_data")
+            .select("*")
+            .order('year', { ascending: true })
+            .order('month', { ascending: true }),
+          getLastUploadTime()
+        ]);
+        
+        if (rosterResult.error) throw rosterResult.error;
+        setRosterData(rosterResult.data || []);
+        setLastUploadTime(uploadTime);
+        
         // Extract all unique names from all fields across all months
         const nameSet = new Set<string>();
-        data?.forEach((row: RosterRow) => {
+        rosterResult.data?.forEach((row: RosterRow) => {
           [
             row.AM ?? row.am,
             row.PM ?? row.pm,
@@ -178,13 +185,16 @@ export default function SearchClient() {
         {/* Data Last Updated */}
         <div className="mb-4 text-center">
           <div className="text-green-600 text-sm">
-            Data last updated: {new Date().toLocaleDateString("en-US", { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            Data last updated: {lastUploadTime ? 
+              new Date(lastUploadTime).toLocaleDateString("en-US", { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 
+              'No data available'
+            }
           </div>
         </div>
 

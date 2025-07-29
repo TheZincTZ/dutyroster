@@ -225,5 +225,30 @@ export async function getPointSystems(month?: number, year?: number) {
   return data;
 }
 
+// Function to get the last upload time from the database
+export async function getLastUploadTime(): Promise<string | null> {
+  try {
+    const { data, error } = await readOnlyClient
+      .from('roster_data')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Error fetching last upload time:', error);
+      return null;
+    }
+
+    if (data && data.length > 0 && data[0].created_at) {
+      return data[0].created_at;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching last upload time:', error);
+    return null;
+  }
+}
+
 // Export the read-only client for direct queries in other components
 export const supabase = readOnlyClient; 

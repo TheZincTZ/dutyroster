@@ -209,7 +209,7 @@ export default function AdminUploadClient() {
       
       // Set selected month to current month if available, otherwise to the most recent month
       if (months.length > 0) {
-        const currentMonthData = months.find(m => m.month === currentMonth + 1 && m.year === currentYear);
+        const currentMonthData = months.find((m: { month: number; year: number; monthName: string }) => m.month === currentMonth + 1 && m.year === currentYear);
         setSelectedMonth(currentMonthData ? { month: currentMonthData.month, year: currentMonthData.year } : { month: months[0].month, year: months[0].year });
       }
     } catch (err) {
@@ -437,18 +437,7 @@ export default function AdminUploadClient() {
           </Link>
         </div>
 
-        {/* Data Last Updated */}
-        <div className="mb-4 text-center">
-          <div className="text-green-600 text-sm">
-            Data last updated: {new Date().toLocaleDateString("en-US", { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
-        </div>
+
 
         {/* Month Selector */}
         {availableMonths.length > 0 && (

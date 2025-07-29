@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRosterData, CalendarMap } from "./lib/db-access";
+import { getRosterData, CalendarMap, getLastUploadTime } from "./lib/db-access";
 import Link from 'next/link';
 import { renderName } from "./lib/renderName";
 
@@ -13,6 +13,7 @@ export default function HomeClient() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
   const [showPin, setShowPin] = useState(false);
+  const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
 
   // Check if already authenticated (stored in sessionStorage)
   useEffect(() => {
@@ -33,9 +34,14 @@ export default function HomeClient() {
         const currentMonth = now.getMonth() + 1; // Convert to 1-based month
         const currentYear = now.getFullYear();
         
-        const calendarData = await getRosterData(currentMonth, currentYear);
+        const [calendarData, uploadTime] = await Promise.all([
+          getRosterData(currentMonth, currentYear),
+          getLastUploadTime()
+        ]);
+        
         if (isMounted) {
           setCalendar(calendarData);
+          setLastUploadTime(uploadTime);
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -232,13 +238,16 @@ export default function HomeClient() {
           Current Time: <span className="font-mono">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
         <div className="text-green-600 text-sm mt-2">
-          Data last updated: {now.toLocaleDateString("en-US", { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+          Data last updated: {lastUploadTime ? 
+            new Date(lastUploadTime).toLocaleDateString("en-US", { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : 
+            'No data available'
+          }
         </div>
       </div>
 
