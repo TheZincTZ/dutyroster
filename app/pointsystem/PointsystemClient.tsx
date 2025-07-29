@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPointSystems } from "../lib/db-access";
+import { getPointSystems, getAvailableMonths } from "../lib/db-access";
 import Link from "next/link";
 
 type PointSystem = {
@@ -19,28 +19,58 @@ export default function PointsystemClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
+  const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
 
   // Get current month and year
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const currentMonthNumber = currentMonth + 1; // Convert to 1-based month number
 
   useEffect(() => {
-    const fetchPoints = async () => {
-      setLoading(true);
-      setError(null);
+    const loadData = async () => {
       try {
-        const data = await getPointSystems(currentMonthNumber, currentYear);
-        setPoints(data || []);
+        // Load available months
+        const months = await getAvailableMonths();
+        setAvailableMonths(months);
+        
+        // Set selected month to current month if available, otherwise to the most recent month
+        if (months.length > 0) {
+          const currentMonthData = months.find(m => m.month === currentMonth + 1 && m.year === currentYear);
+          const targetMonth = currentMonthData ? { month: currentMonthData.month, year: currentMonthData.year } : { month: months[0].month, year: months[0].year };
+          setSelectedMonth(targetMonth);
+          
+          // Load points data for selected month
+          const pointsData = await getPointSystems(targetMonth.month, targetMonth.year);
+          setPoints(pointsData || []);
+        }
       } catch {
         setError("Failed to load point system data");
       } finally {
         setLoading(false);
       }
     };
-    fetchPoints();
-  }, [currentMonthNumber, currentYear]);
+    loadData();
+  }, [currentMonth, currentYear]);
+
+  // Load points data when selected month changes
+  useEffect(() => {
+    if (selectedMonth) {
+      loadPointsForMonth(selectedMonth.month, selectedMonth.year);
+    }
+  }, [selectedMonth]);
+
+  const loadPointsForMonth = async (month: number, year: number) => {
+    setLoading(true);
+    try {
+      const pointsData = await getPointSystems(month, year);
+      setPoints(pointsData || []);
+    } catch {
+      setError("Failed to load point system data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderTable = (unit: string, shift: string) => {
     const filtered = points.filter(p => p.unit === unit && p.shift === shift);
@@ -118,6 +148,30 @@ export default function PointsystemClient() {
           </div>
           <Link href="/" className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors font-semibold text-center">Back to Roster</Link>
         </div>
+
+        {/* Month Selector */}
+        {availableMonths.length > 0 && (
+          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-800 mb-3">Select Month to View:</h3>
+            <div className="flex flex-wrap gap-2">
+              {availableMonths.map((monthData) => (
+                <button
+                  key={`${monthData.year}-${monthData.month}`}
+                  onClick={() => setSelectedMonth({ month: monthData.month, year: monthData.year })}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedMonth?.month === monthData.month && selectedMonth?.year === monthData.year
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+                  }`}
+                >
+                  {monthData.monthName}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
         {loading ? (
           <div className="text-center text-green-700 text-base sm:text-lg font-medium flex flex-col items-center gap-2 py-8">
             <span className="text-3xl animate-spin">🌀</span>
