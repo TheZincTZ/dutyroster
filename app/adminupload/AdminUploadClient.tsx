@@ -211,6 +211,7 @@ export default function AdminUploadClient() {
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const UNLOCK_PASSWORD = "3sibdutyTemasekSIB#?";
 
@@ -258,10 +259,10 @@ export default function AdminUploadClient() {
 
   // Load data when selected month changes
   useEffect(() => {
-    if (selectedMonth && !isLocked) {
+    if (selectedMonth && !isLocked && !isUploading) {
       loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
     }
-  }, [selectedMonth, isLocked]);
+  }, [selectedMonth, isLocked, isUploading]);
 
   const loadCalendarForMonth = async (month: number, year: number) => {
     try {
@@ -302,6 +303,7 @@ export default function AdminUploadClient() {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
     try {
@@ -320,7 +322,11 @@ export default function AdminUploadClient() {
       
       // Process and store duty roster data
       const newCalendar = getCurrentMonthCalendarData(result.data);
+      
+      // Update calendar state immediately for preview
       setCalendar(newCalendar);
+      
+      // Store data in database
       await storeRosterData(newCalendar, monthYear.month, monthYear.year);
 
       // Process and store extras personnel data
@@ -338,6 +344,8 @@ export default function AdminUploadClient() {
       // Refresh available months and set selected month to the uploaded month
       const months = await getAvailableMonths();
       setAvailableMonths(months);
+      
+      // Update selected month without triggering the useEffect that causes loading
       setSelectedMonth({ month: monthYear.month, year: monthYear.year });
 
       setSuccess(`File uploaded successfully! Schedule for ${getMonthName(monthYear.month)} ${monthYear.year} has been updated.`);
@@ -345,6 +353,7 @@ export default function AdminUploadClient() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+      setIsUploading(false);
     }
   };
 
