@@ -211,7 +211,6 @@ export default function AdminUploadClient() {
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [availableMonths, setAvailableMonths] = useState<{ month: number; year: number; monthName: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadedCalendarData, setUploadedCalendarData] = useState<CalendarMap | null>(null);
   
   // Use ref to track upload state more reliably
@@ -261,14 +260,7 @@ export default function AdminUploadClient() {
     }
   }, [loadData]);
 
-  // Load data when selected month changes - but only if we don't have uploaded data
-  useEffect(() => {
-    if (selectedMonth && !isLocked && !isUploadingRef.current && !uploadedCalendarData) {
-      loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
-    }
-  }, [selectedMonth, isLocked, uploadedCalendarData]);
-
-  const loadCalendarForMonth = async (month: number, year: number) => {
+  const loadCalendarForMonth = useCallback(async (month: number, year: number) => {
     // Don't load if we have uploaded data for this month
     if (uploadedCalendarData) {
       return;
@@ -280,7 +272,14 @@ export default function AdminUploadClient() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load calendar data");
     }
-  };
+  }, [uploadedCalendarData]);
+
+  // Load data when selected month changes - but only if we don't have uploaded data
+  useEffect(() => {
+    if (selectedMonth && !isLocked && !isUploadingRef.current && !uploadedCalendarData) {
+      loadCalendarForMonth(selectedMonth.month, selectedMonth.year);
+    }
+  }, [selectedMonth, isLocked, uploadedCalendarData, loadCalendarForMonth]);
 
   // Lock if attempts exceeded
   useEffect(() => {
@@ -313,7 +312,6 @@ export default function AdminUploadClient() {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    setIsUploading(true);
     isUploadingRef.current = true; // Set ref immediately
     
     const formData = new FormData();
@@ -371,7 +369,6 @@ export default function AdminUploadClient() {
       setUploadedCalendarData(null);
     } finally {
       setLoading(false);
-      setIsUploading(false);
       isUploadingRef.current = false; // Reset ref
       // Keep uploaded data for a while to prevent flickering
       setTimeout(() => setUploadedCalendarData(null), 2000);
