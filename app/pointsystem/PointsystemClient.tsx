@@ -12,6 +12,8 @@ type PointSystem = {
   points: number;
   months_valid: number;
   average_points: number;
+  month: number;
+  year: number;
 };
 
 export default function PointsystemClient() {
@@ -24,9 +26,17 @@ export default function PointsystemClient() {
     const fetchPoints = async () => {
       setLoading(true);
       setError(null);
+      
+      // Get current month and year
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+      const currentYear = currentDate.getFullYear();
+      
       const { data, error } = await supabase
         .from("point_systems")
-        .select("id, unit, shift, name, points, months_valid, average_points")
+        .select("id, unit, shift, name, points, months_valid, average_points, month, year")
+        .eq("month", currentMonth)
+        .eq("year", currentYear)
         .order("unit")
         .order("shift")
         .order("name");

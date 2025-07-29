@@ -70,16 +70,15 @@ export async function storeExtrasPersonnelData(extras: { name: string, number: n
 }
 
 export async function storePointSystemsData(points: { unit: string, shift: string, name: string, points: number, months_valid: number, average_points: number }[], month: number, year: number) {
-  // Add month and year to each point system record
-  const pointsWithMonthYear = points.map(point => ({
-    ...point,
-    month: month,
-    year: year
-  }));
-
   const { error } = await adminClient
     .from('point_systems')
-    .upsert(pointsWithMonthYear);
+    .upsert(
+      points.map(point => ({
+        ...point,
+        month: month,
+        year: year
+      }))
+    );
 
   if (error) {
     console.error('Error storing point systems data:', error);
