@@ -157,8 +157,8 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Night Shift (J41-M46, rows 40–45)
-  for (let row = 40; row <= 45; row++) {
+  // SSP Night Shift (J41-M46, rows 41–44)
+  for (let row = 41; row <= 44; row++) {
     const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
     if (name) {
       points.push({
