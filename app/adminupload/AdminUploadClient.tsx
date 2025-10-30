@@ -109,65 +109,65 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
 
 function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
-  const COLUMN_MAP = { 'J': 9, 'K': 10, 'L': 11, 'M': 12 };
+  const COLUMN_MAP = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 
   // Brigade Morning Shift (J3-M13, rows 2–12)
-  for (let row = 2; row <= 12; row++) {
-    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+  for (let row = 41; row <= 50; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
         unit: 'brigade',
         shift: 'morning',
         name,
-        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
       });
     }
   }
 
   // Brigade Night Shift (J16-M35, rows 15–34)
-  for (let row = 15; row <= 34; row++) {
-    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+  for (let row = 53; row <= 71; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
         unit: 'brigade',
         shift: 'night',
         name,
-        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
       });
     }
   }
 
   // SSP Morning Shift (J39-M39, row 38)
   {
-    const row = 38;
-    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+    const row = 75;
+    const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
         unit: 'ssp',
         shift: 'morning',
         name,
-        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
       });
     }
   }
 
   // SSP Night Shift (J41-M46, rows 41–44)
-  for (let row = 41; row <= 44; row++) {
-    const name = matrix[row]?.[COLUMN_MAP['J']]?.toString().trim();
+  for (let row = 77; row <= 80; row++) {
+    const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
         unit: 'ssp',
         shift: 'night',
         name,
-        points: Number(matrix[row]?.[COLUMN_MAP['K']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['L']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['M']] || 0)
+        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
+        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
+        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
       });
     }
   }
