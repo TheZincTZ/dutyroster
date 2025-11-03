@@ -30,6 +30,27 @@ function extractMonthYear(matrix: string[][]): { month: number; year: number; mo
       'january', 'february', 'march', 'april', 'may', 'june',
       'july', 'august', 'september', 'october', 'november', 'december'
     ];
+    
+    // Try to parse date format like "11/25/2025" (MM/DD/YYYY) or "11/25/2025" (M/D/YYYY)
+    for (const text of [a1, a2]) {
+      if (!text) continue;
+      
+      // Match date format: MM/DD/YYYY or M/D/YYYY
+      const dateMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (dateMatch) {
+        const month = parseInt(dateMatch[1], 10);
+        const year = parseInt(dateMatch[3], 10);
+        if (month >= 1 && month <= 12 && year >= 2000 && year <= 2099) {
+          return {
+            month: month,
+            year: year,
+            monthName: monthNames[month - 1]
+          };
+        }
+      }
+    }
+    
+    // Fallback to original text-based parsing
     for (const text of [a1, a2]) {
       if (!text) continue;
       const lowerText = text.toLowerCase();
@@ -84,13 +105,13 @@ function extractMonthYear(matrix: string[][]): { month: number; year: number; mo
 function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
   const calendar: CalendarMap = {};
   // Week blocks start at rows 1, 6, 11, 16, 21 (0-based)
-  const weekStarts = [1, 6, 11, 16, 21];
+  const weekStarts = [2, 8, 14, 20, 26];
   for (const start of weekStarts) {
     const dateRow = matrix[start];
-    const amRow = matrix[start + 1];
-    const pmRow = matrix[start + 2];
-    const reserveAmRow = matrix[start + 3];
-    const reservePmRow = matrix[start + 4];
+    const amRow = matrix[start + 2];
+    const pmRow = matrix[start + 3];
+    const reserveAmRow = matrix[start + 4];
+    const reservePmRow = matrix[start + 5];
     if (!dateRow || !amRow || !pmRow || !reserveAmRow || !reservePmRow) continue;
     for (let col = 1; col <= 7; col++) { // B-H, 1-7
       const dateCell = dateRow[col];
@@ -112,7 +133,7 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   const COLUMN_MAP = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 
   // Brigade Morning Shift (J3-M13, rows 2–12)
-  for (let row = 41; row <= 50; row++) {
+  for (let row = 2; row <= 12; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
@@ -157,7 +178,7 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Night Shift (J41-M46, rows 41–44)
+  // SSP Night Shift (J42-M45, rows 77–80)
   for (let row = 77; row <= 80; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
