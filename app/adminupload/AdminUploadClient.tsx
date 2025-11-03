@@ -134,79 +134,133 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   
   // Helper function to check if a name is a header that should be skipped
   const isHeaderRow = (name: string): boolean => {
-    if (!name) return true;
-    const upperName = name.toUpperCase();
+    if (!name || name.trim() === '') return true;
+    const upperName = name.toUpperCase().trim();
     return upperName === 'MORNING' || 
            upperName === 'NIGHT' || 
+           upperName === 'SSP DUTY CLERKS' ||
+           upperName === 'BRIGADE DUTY CLERKS' ||
            upperName.includes('SSP DUTY CLERKS') ||
            upperName.includes('BRIGADE DUTY CLERKS') ||
            upperName.includes('POINTS') ||
            upperName.includes('MONTHS VALID') ||
-           upperName.includes('AVERAGE POINTS');
+           upperName.includes('AVERAGE POINTS') ||
+           upperName.startsWith('POINTS') ||
+           upperName === 'NAME'; // Common header
   };
 
   // Brigade Morning Shift (A42-D51, Excel rows 42-51 = 0-indexed rows 41-50)
-  // Row 41 (0-indexed) contains "MORNING" header, data starts from row 42 (0-indexed)
+  // Excel row 41 (0-indexed row 40) has "MORNING" header, data starts from Excel row 42 (0-indexed row 41)
+  // A42 = Excel row 42 = array index 41 (since Excel row 1 = array index 0)
   for (let row = 41; row <= 50; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name && !isHeaderRow(name)) {
-      points.push({
-        unit: 'brigade',
-        shift: 'morning',
-        name,
-        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
-      });
-    }
+    const pointsVal = matrix[row]?.[COLUMN_MAP['B']];
+    const monthsVal = matrix[row]?.[COLUMN_MAP['C']];
+    const avgVal = matrix[row]?.[COLUMN_MAP['D']];
+    
+    // Skip if no name or if it's a header row
+    if (!name || isHeaderRow(name)) continue;
+    
+    // Only add if there's actual point data (points, months_valid, or average_points)
+    const pointsNum = Number(pointsVal) || 0;
+    const monthsNum = Number(monthsVal) || 0;
+    const avgNum = Number(avgVal) || 0;
+    
+    // Skip rows that have no meaningful data
+    if (pointsNum === 0 && monthsNum === 0 && avgNum === 0) continue;
+    
+    points.push({
+      unit: 'brigade',
+      shift: 'morning',
+      name,
+      points: pointsNum,
+      months_valid: monthsNum,
+      average_points: avgNum
+    });
   }
 
   // Brigade Night Shift (A54-D72, Excel rows 54-72 = 0-indexed rows 53-71)
-  // Row 53 (0-indexed) contains "NIGHT" header, data starts from row 54 (0-indexed)
+  // Excel row 53 (0-indexed row 52) has "NIGHT" header, data starts from Excel row 54 (0-indexed row 53)
   for (let row = 53; row <= 71; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name && !isHeaderRow(name)) {
-      points.push({
-        unit: 'brigade',
-        shift: 'night',
-        name,
-        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
-      });
-    }
+    const pointsVal = matrix[row]?.[COLUMN_MAP['B']];
+    const monthsVal = matrix[row]?.[COLUMN_MAP['C']];
+    const avgVal = matrix[row]?.[COLUMN_MAP['D']];
+    
+    // Skip if no name or if it's a header row
+    if (!name || isHeaderRow(name)) continue;
+    
+    // Only add if there's actual point data
+    const pointsNum = Number(pointsVal) || 0;
+    const monthsNum = Number(monthsVal) || 0;
+    const avgNum = Number(avgVal) || 0;
+    
+    // Skip rows that have no meaningful data
+    if (pointsNum === 0 && monthsNum === 0 && avgNum === 0) continue;
+    
+    points.push({
+      unit: 'brigade',
+      shift: 'night',
+      name,
+      points: pointsNum,
+      months_valid: monthsNum,
+      average_points: avgNum
+    });
   }
 
   // SSP Morning Shift (A76-D76, Excel row 76 = 0-indexed row 75)
   {
     const row = 75;
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
+    const pointsVal = matrix[row]?.[COLUMN_MAP['B']];
+    const monthsVal = matrix[row]?.[COLUMN_MAP['C']];
+    const avgVal = matrix[row]?.[COLUMN_MAP['D']];
+    
     if (name && !isHeaderRow(name)) {
-      points.push({
-        unit: 'ssp',
-        shift: 'morning',
-        name,
-        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
-      });
+      const pointsNum = Number(pointsVal) || 0;
+      const monthsNum = Number(monthsVal) || 0;
+      const avgNum = Number(avgVal) || 0;
+      
+      if (pointsNum > 0 || monthsNum > 0 || avgNum > 0) {
+        points.push({
+          unit: 'ssp',
+          shift: 'morning',
+          name,
+          points: pointsNum,
+          months_valid: monthsNum,
+          average_points: avgNum
+        });
+      }
     }
   }
 
   // SSP Night Shift (A78-D81, Excel rows 78-81 = 0-indexed rows 77-80)
-  // Row 77 (0-indexed) contains "NIGHT" header, data starts from row 78 (0-indexed)
+  // Excel row 77 (0-indexed row 76) has "NIGHT" header, data starts from Excel row 78 (0-indexed row 77)
   for (let row = 77; row <= 80; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name && !isHeaderRow(name)) {
-      points.push({
-        unit: 'ssp',
-        shift: 'night',
-        name,
-        points: Number(matrix[row]?.[COLUMN_MAP['B']] || 0),
-        months_valid: Number(matrix[row]?.[COLUMN_MAP['C']] || 0),
-        average_points: Number(matrix[row]?.[COLUMN_MAP['D']] || 0)
-      });
-    }
+    const pointsVal = matrix[row]?.[COLUMN_MAP['B']];
+    const monthsVal = matrix[row]?.[COLUMN_MAP['C']];
+    const avgVal = matrix[row]?.[COLUMN_MAP['D']];
+    
+    // Skip if no name or if it's a header row
+    if (!name || isHeaderRow(name)) continue;
+    
+    // Only add if there's actual point data
+    const pointsNum = Number(pointsVal) || 0;
+    const monthsNum = Number(monthsVal) || 0;
+    const avgNum = Number(avgVal) || 0;
+    
+    // Skip rows that have no meaningful data
+    if (pointsNum === 0 && monthsNum === 0 && avgNum === 0) continue;
+    
+    points.push({
+      unit: 'ssp',
+      shift: 'night',
+      name,
+      points: pointsNum,
+      months_valid: monthsNum,
+      average_points: avgNum
+    });
   }
 
   return points;
