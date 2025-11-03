@@ -131,11 +131,25 @@ function getCurrentMonthCalendarData(matrix: string[][]): CalendarMap {
 function getPointSystemData(matrix: string[][]): PointSystem[] {
   const points: PointSystem[] = [];
   const COLUMN_MAP = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+  
+  // Helper function to check if a name is a header that should be skipped
+  const isHeaderRow = (name: string): boolean => {
+    if (!name) return true;
+    const upperName = name.toUpperCase();
+    return upperName === 'MORNING' || 
+           upperName === 'NIGHT' || 
+           upperName.includes('SSP DUTY CLERKS') ||
+           upperName.includes('BRIGADE DUTY CLERKS') ||
+           upperName.includes('POINTS') ||
+           upperName.includes('MONTHS VALID') ||
+           upperName.includes('AVERAGE POINTS');
+  };
 
-  // Brigade Morning Shift (J3-M13, rows 2–12)
+  // Brigade Morning Shift (A42-D51, Excel rows 42-51 = 0-indexed rows 41-50)
+  // Row 41 (0-indexed) contains "MORNING" header, data starts from row 42 (0-indexed)
   for (let row = 41; row <= 50; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name) {
+    if (name && !isHeaderRow(name)) {
       points.push({
         unit: 'brigade',
         shift: 'morning',
@@ -147,10 +161,11 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // Brigade Night Shift (J16-M35, rows 15–34)
+  // Brigade Night Shift (A54-D72, Excel rows 54-72 = 0-indexed rows 53-71)
+  // Row 53 (0-indexed) contains "NIGHT" header, data starts from row 54 (0-indexed)
   for (let row = 53; row <= 71; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name) {
+    if (name && !isHeaderRow(name)) {
       points.push({
         unit: 'brigade',
         shift: 'night',
@@ -162,11 +177,11 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Morning Shift (J39-M39, row 38)
+  // SSP Morning Shift (A76-D76, Excel row 76 = 0-indexed row 75)
   {
     const row = 75;
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name) {
+    if (name && !isHeaderRow(name)) {
       points.push({
         unit: 'ssp',
         shift: 'morning',
@@ -178,10 +193,11 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
     }
   }
 
-  // SSP Night Shift (J42-M45, rows 77–80)
+  // SSP Night Shift (A78-D81, Excel rows 78-81 = 0-indexed rows 77-80)
+  // Row 77 (0-indexed) contains "NIGHT" header, data starts from row 78 (0-indexed)
   for (let row = 77; row <= 80; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
-    if (name) {
+    if (name && !isHeaderRow(name)) {
       points.push({
         unit: 'ssp',
         shift: 'night',
