@@ -133,7 +133,7 @@ function getPointSystemData(matrix: string[][]): PointSystem[] {
   const COLUMN_MAP = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 
   // Brigade Morning Shift (J3-M13, rows 2–12)
-  for (let row = 2; row <= 12; row++) {
+  for (let row = 41; row <= 50; row++) {
     const name = matrix[row]?.[COLUMN_MAP['A']]?.toString().trim();
     if (name) {
       points.push({
